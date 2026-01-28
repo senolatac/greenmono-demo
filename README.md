@@ -36,6 +36,52 @@ mvn spring-boot:run
 - Lombok
 - Swagger/OpenAPI
 
+## Project Structure
+
+The project follows a standard Spring Boot layered architecture:
+
+```
+weekly-meal-planner/
+├── src/
+│   ├── main/
+│   │   ├── java/com/greenmono/mealplanner/
+│   │   │   ├── entity/              # JPA entity classes
+│   │   │   │   ├── Ingredient.java
+│   │   │   │   ├── Meal.java
+│   │   │   │   ├── NutritionalInfo.java
+│   │   │   │   ├── MenuPlan.java
+│   │   │   │   └── DailyMealPlan.java
+│   │   │   ├── repository/          # Spring Data JPA repositories
+│   │   │   │   ├── IngredientRepository.java
+│   │   │   │   ├── MealRepository.java
+│   │   │   │   ├── NutritionalInfoRepository.java
+│   │   │   │   ├── MenuPlanRepository.java
+│   │   │   │   └── DailyMealPlanRepository.java
+│   │   │   └── MealPlannerApplication.java  # Main application class
+│   │   └── resources/
+│   │       ├── db/migration/        # Flyway database migrations
+│   │       │   ├── V1__Create_ingredients_table.sql
+│   │       │   ├── V2__Create_meals_table.sql
+│   │       │   ├── V3__Create_nutritional_info_table.sql
+│   │       │   └── V4__Create_menu_plans_tables.sql
+│   │       ├── application.yml      # Main configuration
+│   │       └── application-dev.yml  # Development profile configuration
+│   └── test/
+│       └── resources/
+│           └── application-test.yml # Test profile configuration
+├── pom.xml                          # Maven project configuration
+├── PROJECT_SETUP.md                 # Detailed setup instructions
+├── DATABASE_SCHEMA.md               # Database schema documentation
+└── README.md                        # This file
+```
+
+### Key Components
+
+- **Entity Layer**: JPA entities representing database tables with relationships and constraints
+- **Repository Layer**: Spring Data JPA repositories with custom query methods for data access
+- **Database Migrations**: Flyway versioned scripts for schema management and evolution
+- **Configuration**: Profile-based configuration (dev, test) for different environments
+
 ## API Documentation
 
 Once running, access the API documentation at:
