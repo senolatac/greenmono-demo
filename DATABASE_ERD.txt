@@ -1,0 +1,204 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    WEEKLY MEAL PLANNER - DATABASE ERD
+═══════════════════════════════════════════════════════════════════════════════
+
+┌──────────────────────────────────┐
+│        INGREDIENTS               │
+├──────────────────────────────────┤
+│ PK  id                BIGINT     │
+│     name              VARCHAR    │
+│     category          VARCHAR    │
+│     quantity          DECIMAL    │
+│     unit              VARCHAR    │
+│     expiry_date       DATE       │
+│     notes             VARCHAR    │
+│     available         BOOLEAN    │
+│     user_id           BIGINT     │
+│     created_at        TIMESTAMP  │
+│     updated_at        TIMESTAMP  │
+└──────────────────────────────────┘
+         │
+         │ 1:1
+         │
+         ▼
+┌──────────────────────────────────┐        ┌──────────────────────────────────┐
+│     NUTRITIONAL_INFO             │        │           MEALS                   │
+├──────────────────────────────────┤        ├──────────────────────────────────┤
+│ PK  id                BIGINT     │◄──1:1──│ PK  id                BIGINT     │
+│ FK  ingredient_id     BIGINT     │        │     name              VARCHAR    │
+│ FK  meal_id           BIGINT     │        │     description       VARCHAR    │
+│     serving_size      DECIMAL    │        │     meal_type         VARCHAR    │
+│     serving_unit      VARCHAR    │        │     prep_time_minutes INTEGER    │
+│     calories          DECIMAL    │        │     cook_time_minutes INTEGER    │
+│     protein           DECIMAL    │        │     servings          INTEGER    │
+│     carbohydrates     DECIMAL    │        │     difficulty_level  VARCHAR    │
+│     fat               DECIMAL    │        │     image_url         VARCHAR    │
+│     fiber             DECIMAL    │        │     user_id           BIGINT     │
+│     sugar             DECIMAL    │        │     active            BOOLEAN    │
+│     sodium            DECIMAL    │        │     created_at        TIMESTAMP  │
+│     cholesterol       DECIMAL    │        │     updated_at        TIMESTAMP  │
+│     saturated_fat     DECIMAL    │        └──────────────────────────────────┘
+│     trans_fat         DECIMAL    │                      │
+│     vitamin_a         DECIMAL    │                      │
+│     vitamin_c         DECIMAL    │                      │ M:N
+│     vitamin_d         DECIMAL    │                      │
+│     calcium           DECIMAL    │        ┌─────────────▼──────────────────┐
+│     iron              DECIMAL    │        │     MEAL_INGREDIENTS           │
+│     potassium         DECIMAL    │        ├────────────────────────────────┤
+│     notes             VARCHAR    │        │ FK  meal_id         BIGINT     │
+│     created_at        TIMESTAMP  │        │ FK  ingredient_id   BIGINT     │
+│     updated_at        TIMESTAMP  │        └────────────────────────────────┘
+└──────────────────────────────────┘                      │
+                                                          │
+                          ┌───────────────────────────────┘
+                          │
+                          │ M:N
+                          │
+                          ▼
+┌────────────────────────────────────────────────────────────────┐
+│                         MENU_PLANS                             │
+├────────────────────────────────────────────────────────────────┤
+│ PK  id                      BIGINT                             │
+│     name                    VARCHAR                            │
+│     description             VARCHAR                            │
+│     user_id                 BIGINT                             │
+│     start_date              DATE                               │
+│     end_date                DATE                               │
+│     status                  VARCHAR                            │
+│     total_calories          INTEGER                            │
+│     average_daily_calories  INTEGER                            │
+│     notes                   VARCHAR                            │
+│     is_balanced             BOOLEAN                            │
+│     balance_score           DOUBLE PRECISION                   │
+│     created_at              TIMESTAMP                          │
+│     updated_at              TIMESTAMP                          │
+└────────────────────────────────────────────────────────────────┘
+         │
+         │ 1:M
+         │
+         ▼
+┌────────────────────────────────────────────────────────────────┐
+│                     DAILY_MEAL_PLANS                           │
+├────────────────────────────────────────────────────────────────┤
+│ PK  id                 BIGINT                                  │
+│ FK  menu_plan_id       BIGINT                                  │
+│     day_number         INTEGER                                 │
+│     meal_date          DATE                                    │
+│ FK  breakfast_meal_id  BIGINT      ───┐                        │
+│ FK  lunch_meal_id      BIGINT      ───┼─► References MEALS    │
+│ FK  dinner_meal_id     BIGINT      ───┤                        │
+│ FK  snack_meal_id      BIGINT      ───┘                        │
+│     total_calories     INTEGER                                 │
+│     notes              VARCHAR                                 │
+│     created_at         TIMESTAMP                               │
+│     updated_at         TIMESTAMP                               │
+└────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                            RELATIONSHIP SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+
+1. INGREDIENTS ↔ NUTRITIONAL_INFO (1:1)
+   - Each ingredient can have one nutritional info record
+   - Cascading delete: if ingredient is deleted, its nutritional info is deleted
+
+2. MEALS ↔ NUTRITIONAL_INFO (1:1)
+   - Each meal can have one nutritional info record
+   - Cascading delete: if meal is deleted, its nutritional info is deleted
+
+3. INGREDIENTS ↔ MEALS (M:N via MEAL_INGREDIENTS)
+   - Many ingredients can be used in many meals
+   - Junction table: meal_ingredients
+   - Cascading delete: if meal or ingredient is deleted, junction record is deleted
+
+4. MENU_PLANS ↔ MEALS (M:N via MENU_PLAN_MEALS)
+   - Many meals can be in many menu plans
+   - Junction table: menu_plan_meals
+   - Cascading delete: if menu plan or meal is deleted, junction record is deleted
+
+5. MENU_PLANS ↔ DAILY_MEAL_PLANS (1:M)
+   - One menu plan has many daily meal plans (typically 5 for a 5-day plan)
+   - Cascading delete: if menu plan is deleted, all daily meal plans are deleted
+
+6. MEALS ↔ DAILY_MEAL_PLANS (M:1 for each meal type)
+   - Each meal can be assigned to multiple daily meal plans
+   - Each daily meal plan references specific meals for breakfast/lunch/dinner/snack
+   - SET NULL on delete: if meal is deleted, reference is set to NULL
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                              SUPPORTING TABLES
+═══════════════════════════════════════════════════════════════════════════════
+
+MEAL_INSTRUCTIONS
+├─ meal_id (FK to meals)
+├─ instruction (VARCHAR)
+└─ step_order (INTEGER)
+
+MEAL_TAGS
+├─ meal_id (FK to meals)
+└─ tag (VARCHAR)
+
+MENU_PLAN_MEALS (Junction Table)
+├─ menu_plan_id (FK to menu_plans)
+└─ meal_id (FK to meals)
+
+MEAL_INGREDIENTS (Junction Table)
+├─ meal_id (FK to meals)
+└─ ingredient_id (FK to ingredients)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                                 KEY INDEXES
+═══════════════════════════════════════════════════════════════════════════════
+
+INGREDIENTS:
+- idx_ingredient_name (name)
+- idx_ingredient_category (category)
+- idx_ingredient_expiry (expiry_date)
+- idx_ingredient_user (user_id)
+
+MEALS:
+- idx_meal_name (name)
+- idx_meal_type (meal_type)
+- idx_meal_difficulty (difficulty_level)
+- idx_meal_user (user_id)
+
+NUTRITIONAL_INFO:
+- idx_nutritional_ingredient (ingredient_id)
+- idx_nutritional_meal (meal_id)
+- idx_nutritional_calories (calories)
+
+MENU_PLANS:
+- idx_menu_plan_user (user_id)
+- idx_menu_plan_start_date (start_date)
+- idx_menu_plan_status (status)
+
+DAILY_MEAL_PLANS:
+- idx_daily_meal_plan_menu (menu_plan_id)
+- idx_daily_meal_plan_date (meal_date)
+- idx_daily_meal_plan_day (day_number)
+
+JUNCTION TABLES:
+- idx_meal_ingredient_meal (meal_id in meal_ingredients)
+- idx_meal_ingredient_ingredient (ingredient_id in meal_ingredients)
+- idx_menu_plan_meal_plan (menu_plan_id in menu_plan_meals)
+- idx_menu_plan_meal_meal (meal_id in menu_plan_meals)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                            DATA FLOW EXAMPLE
+═══════════════════════════════════════════════════════════════════════════════
+
+1. User adds INGREDIENTS to their inventory
+2. System tracks nutritional data via NUTRITIONAL_INFO
+3. MEALS are created using available INGREDIENTS
+4. Each MEAL has NUTRITIONAL_INFO calculated from ingredients
+5. User requests a 5-day MENU_PLAN
+6. System creates MENU_PLAN with 5 DAILY_MEAL_PLANS
+7. Each DAILY_MEAL_PLAN assigns specific MEALS for each meal type
+8. System calculates total calories and balance score
+9. User views their balanced 5-day menu with full nutritional breakdown
+
+═══════════════════════════════════════════════════════════════════════════════
