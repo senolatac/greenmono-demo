@@ -1,6 +1,8 @@
 package com.greenmono.mealplanner.repository;
 
 import com.greenmono.mealplanner.entity.Ingredient;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +13,8 @@ import java.util.List;
 
 @Repository
 public interface IngredientRepository extends JpaRepository<Ingredient, Long> {
+
+    Page<Ingredient> findByCategory(Ingredient.IngredientCategory category, Pageable pageable);
 
     List<Ingredient> findByUserId(Long userId);
 
