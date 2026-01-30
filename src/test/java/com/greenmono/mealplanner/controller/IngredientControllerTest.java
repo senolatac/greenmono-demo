@@ -3,6 +3,7 @@ package com.greenmono.mealplanner.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.greenmono.mealplanner.dto.IngredientRequest;
 import com.greenmono.mealplanner.dto.IngredientResponse;
+import com.greenmono.mealplanner.dto.PageResponse;
 import com.greenmono.mealplanner.entity.Ingredient;
 import com.greenmono.mealplanner.exception.DuplicateIngredientException;
 import com.greenmono.mealplanner.service.IngredientService;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -19,10 +21,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -313,5 +319,254 @@ class IngredientControllerTest {
                 .andExpect(jsonPath("$.quantity", is(100.00)))
                 .andExpect(jsonPath("$.unit", is("GRAM")))
                 .andExpect(jsonPath("$.available", is(true)));
+    }
+
+    @Test
+    @DisplayName("Should return 200 OK with paginated ingredients without category filter")
+    void shouldGetAllIngredientsWithoutCategoryFilter() throws Exception {
+        // Arrange
+        PageResponse<IngredientResponse> pageResponse = PageResponse.<IngredientResponse>builder()
+                .content(Arrays.asList(
+                        IngredientResponse.builder()
+                                .id(1L)
+                                .name("Chicken Breast")
+                                .category(Ingredient.IngredientCategory.POULTRY)
+                                .quantity(new BigDecimal("500.00"))
+                                .unit(Ingredient.Unit.GRAM)
+                                .available(true)
+                                .build(),
+                        IngredientResponse.builder()
+                                .id(2L)
+                                .name("Tomato")
+                                .category(Ingredient.IngredientCategory.VEGETABLES)
+                                .quantity(new BigDecimal("200.00"))
+                                .unit(Ingredient.Unit.GRAM)
+                                .available(true)
+                                .build()
+                ))
+                .pageNumber(0)
+                .pageSize(20)
+                .totalElements(2)
+                .totalPages(1)
+                .first(true)
+                .last(true)
+                .build();
+
+        when(ingredientService.getIngredients(eq(null), any(Pageable.class)))
+                .thenReturn(pageResponse);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/ingredients")
+                        .param("page", "0")
+                        .param("size", "20")
+                        .param("sortBy", "name")
+                        .param("sortDirection", "ASC"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].name", is("Chicken Breast")))
+                .andExpect(jsonPath("$.content[1].name", is("Tomato")))
+                .andExpect(jsonPath("$.pageNumber", is(0)))
+                .andExpect(jsonPath("$.pageSize", is(20)))
+                .andExpect(jsonPath("$.totalElements", is(2)))
+                .andExpect(jsonPath("$.totalPages", is(1)))
+                .andExpect(jsonPath("$.first", is(true)))
+                .andExpect(jsonPath("$.last", is(true)));
+    }
+
+    @Test
+    @DisplayName("Should return 200 OK with ingredients filtered by category")
+    void shouldGetIngredientsFilteredByCategory() throws Exception {
+        // Arrange
+        PageResponse<IngredientResponse> pageResponse = PageResponse.<IngredientResponse>builder()
+                .content(Arrays.asList(
+                        IngredientResponse.builder()
+                                .id(2L)
+                                .name("Tomato")
+                                .category(Ingredient.IngredientCategory.VEGETABLES)
+                                .quantity(new BigDecimal("200.00"))
+                                .unit(Ingredient.Unit.GRAM)
+                                .available(true)
+                                .build(),
+                        IngredientResponse.builder()
+                                .id(3L)
+                                .name("Carrot")
+                                .category(Ingredient.IngredientCategory.VEGETABLES)
+                                .quantity(new BigDecimal("150.00"))
+                                .unit(Ingredient.Unit.GRAM)
+                                .available(true)
+                                .build()
+                ))
+                .pageNumber(0)
+                .pageSize(20)
+                .totalElements(2)
+                .totalPages(1)
+                .first(true)
+                .last(true)
+                .build();
+
+        when(ingredientService.getIngredients(eq(Ingredient.IngredientCategory.VEGETABLES), any(Pageable.class)))
+                .thenReturn(pageResponse);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/ingredients")
+                        .param("category", "VEGETABLES")
+                        .param("page", "0")
+                        .param("size", "20"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].category", is("VEGETABLES")))
+                .andExpect(jsonPath("$.content[1].category", is("VEGETABLES")))
+                .andExpect(jsonPath("$.totalElements", is(2)));
+    }
+
+    @Test
+    @DisplayName("Should return 200 OK with empty page when no ingredients found")
+    void shouldReturnEmptyPageWhenNoIngredientsFound() throws Exception {
+        // Arrange
+        PageResponse<IngredientResponse> emptyPage = PageResponse.<IngredientResponse>builder()
+                .content(Collections.emptyList())
+                .pageNumber(0)
+                .pageSize(20)
+                .totalElements(0)
+                .totalPages(0)
+                .first(true)
+                .last(true)
+                .build();
+
+        when(ingredientService.getIngredients(eq(null), any(Pageable.class)))
+                .thenReturn(emptyPage);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/ingredients"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content", hasSize(0)))
+                .andExpect(jsonPath("$.totalElements", is(0)))
+                .andExpect(jsonPath("$.totalPages", is(0)));
+    }
+
+    @Test
+    @DisplayName("Should use default pagination parameters when not provided")
+    void shouldUseDefaultPaginationParameters() throws Exception {
+        // Arrange
+        PageResponse<IngredientResponse> pageResponse = PageResponse.<IngredientResponse>builder()
+                .content(Arrays.asList(
+                        IngredientResponse.builder()
+                                .id(1L)
+                                .name("Apple")
+                                .category(Ingredient.IngredientCategory.FRUITS)
+                                .quantity(new BigDecimal("300.00"))
+                                .unit(Ingredient.Unit.GRAM)
+                                .available(true)
+                                .build()
+                ))
+                .pageNumber(0)
+                .pageSize(20)
+                .totalElements(1)
+                .totalPages(1)
+                .first(true)
+                .last(true)
+                .build();
+
+        when(ingredientService.getIngredients(eq(null), any(Pageable.class)))
+                .thenReturn(pageResponse);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/ingredients"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.pageNumber", is(0)))
+                .andExpect(jsonPath("$.pageSize", is(20)));
+    }
+
+    @Test
+    @DisplayName("Should handle custom page size and page number")
+    void shouldHandleCustomPageSizeAndNumber() throws Exception {
+        // Arrange
+        PageResponse<IngredientResponse> pageResponse = PageResponse.<IngredientResponse>builder()
+                .content(Arrays.asList(
+                        IngredientResponse.builder()
+                                .id(11L)
+                                .name("Ingredient 11")
+                                .category(Ingredient.IngredientCategory.OTHER)
+                                .quantity(new BigDecimal("100.00"))
+                                .unit(Ingredient.Unit.GRAM)
+                                .available(true)
+                                .build()
+                ))
+                .pageNumber(2)
+                .pageSize(5)
+                .totalElements(15)
+                .totalPages(3)
+                .first(false)
+                .last(true)
+                .build();
+
+        when(ingredientService.getIngredients(eq(null), any(Pageable.class)))
+                .thenReturn(pageResponse);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/ingredients")
+                        .param("page", "2")
+                        .param("size", "5"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.pageNumber", is(2)))
+                .andExpect(jsonPath("$.pageSize", is(5)))
+                .andExpect(jsonPath("$.totalPages", is(3)))
+                .andExpect(jsonPath("$.first", is(false)))
+                .andExpect(jsonPath("$.last", is(true)));
+    }
+
+    @Test
+    @DisplayName("Should sort ingredients in descending order")
+    void shouldSortIngredientsInDescendingOrder() throws Exception {
+        // Arrange
+        PageResponse<IngredientResponse> pageResponse = PageResponse.<IngredientResponse>builder()
+                .content(Arrays.asList(
+                        IngredientResponse.builder()
+                                .id(2L)
+                                .name("Zucchini")
+                                .category(Ingredient.IngredientCategory.VEGETABLES)
+                                .quantity(new BigDecimal("200.00"))
+                                .unit(Ingredient.Unit.GRAM)
+                                .available(true)
+                                .build(),
+                        IngredientResponse.builder()
+                                .id(1L)
+                                .name("Apple")
+                                .category(Ingredient.IngredientCategory.FRUITS)
+                                .quantity(new BigDecimal("300.00"))
+                                .unit(Ingredient.Unit.GRAM)
+                                .available(true)
+                                .build()
+                ))
+                .pageNumber(0)
+                .pageSize(20)
+                .totalElements(2)
+                .totalPages(1)
+                .first(true)
+                .last(true)
+                .build();
+
+        when(ingredientService.getIngredients(eq(null), any(Pageable.class)))
+                .thenReturn(pageResponse);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/ingredients")
+                        .param("sortBy", "name")
+                        .param("sortDirection", "DESC"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content[0].name", is("Zucchini")))
+                .andExpect(jsonPath("$.content[1].name", is("Apple")));
     }
 }
