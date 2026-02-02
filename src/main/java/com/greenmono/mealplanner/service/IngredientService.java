@@ -5,6 +5,7 @@ import com.greenmono.mealplanner.dto.IngredientResponse;
 import com.greenmono.mealplanner.dto.PageResponse;
 import com.greenmono.mealplanner.entity.Ingredient;
 import com.greenmono.mealplanner.exception.DuplicateIngredientException;
+import com.greenmono.mealplanner.exception.IngredientNotFoundException;
 import com.greenmono.mealplanner.mapper.IngredientMapper;
 import com.greenmono.mealplanner.repository.IngredientRepository;
 import lombok.RequiredArgsConstructor;
@@ -75,5 +76,22 @@ public class IngredientService {
                 .first(ingredientPage.isFirst())
                 .last(ingredientPage.isLast())
                 .build();
+    }
+
+    @Transactional
+    public void deleteIngredient(Long id) {
+        log.info("Deleting ingredient with id: {}", id);
+
+        // Check if ingredient exists
+        if (!ingredientRepository.existsById(id)) {
+            log.warn("Ingredient not found with id: {}", id);
+            throw new IngredientNotFoundException(
+                    String.format("Ingredient not found with id: %d", id)
+            );
+        }
+
+        // Delete the ingredient
+        ingredientRepository.deleteById(id);
+        log.info("Successfully deleted ingredient with id: {}", id);
     }
 }

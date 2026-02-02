@@ -69,4 +69,18 @@ public class IngredientController {
         PageResponse<IngredientResponse> response = ingredientService.getIngredients(category, pageable);
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "Delete an ingredient", description = "Deletes an ingredient by its ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Ingredient deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Ingredient not found")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteIngredient(
+            @Parameter(description = "Ingredient ID to delete")
+            @PathVariable Long id) {
+        log.info("Received request to delete ingredient with id: {}", id);
+        ingredientService.deleteIngredient(id);
+        return ResponseEntity.noContent().build();
+    }
 }
