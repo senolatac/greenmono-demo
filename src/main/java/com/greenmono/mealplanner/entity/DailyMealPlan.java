@@ -57,6 +57,18 @@ public class DailyMealPlan {
     @JoinColumn(name = "snack_meal_id")
     private Meal snackMeal;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "breakfast_recipe_id")
+    private Recipe breakfastRecipe;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lunch_recipe_id")
+    private Recipe lunchRecipe;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dinner_recipe_id")
+    private Recipe dinnerRecipe;
+
     @Column(name = "total_calories")
     private Integer totalCalories;
 
