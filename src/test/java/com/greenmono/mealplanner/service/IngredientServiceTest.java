@@ -5,6 +5,7 @@ import com.greenmono.mealplanner.dto.IngredientResponse;
 import com.greenmono.mealplanner.dto.PageResponse;
 import com.greenmono.mealplanner.entity.Ingredient;
 import com.greenmono.mealplanner.exception.DuplicateIngredientException;
+import com.greenmono.mealplanner.exception.IngredientNotFoundException;
 import com.greenmono.mealplanner.mapper.IngredientMapper;
 import com.greenmono.mealplanner.repository.IngredientRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -389,5 +390,37 @@ class IngredientServiceTest {
 
         verify(ingredientRepository).findAll(pageable);
         verify(ingredientMapper, never()).toResponse(any(Ingredient.class));
+    }
+
+    @Test
+    @DisplayName("Should successfully delete ingredient when it exists")
+    void shouldDeleteIngredientSuccessfully() {
+        // Arrange
+        Long ingredientId = 1L;
+        when(ingredientRepository.existsById(ingredientId)).thenReturn(true);
+        doNothing().when(ingredientRepository).deleteById(ingredientId);
+
+        // Act
+        ingredientService.deleteIngredient(ingredientId);
+
+        // Assert
+        verify(ingredientRepository).existsById(ingredientId);
+        verify(ingredientRepository).deleteById(ingredientId);
+    }
+
+    @Test
+    @DisplayName("Should throw IngredientNotFoundException when ingredient does not exist")
+    void shouldThrowIngredientNotFoundExceptionWhenIngredientDoesNotExist() {
+        // Arrange
+        Long ingredientId = 999L;
+        when(ingredientRepository.existsById(ingredientId)).thenReturn(false);
+
+        // Act & Assert
+        assertThatThrownBy(() -> ingredientService.deleteIngredient(ingredientId))
+                .isInstanceOf(IngredientNotFoundException.class)
+                .hasMessageContaining("Ingredient not found with id: 999");
+
+        verify(ingredientRepository).existsById(ingredientId);
+        verify(ingredientRepository, never()).deleteById(any());
     }
 }

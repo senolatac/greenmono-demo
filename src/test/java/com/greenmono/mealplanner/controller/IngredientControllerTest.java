@@ -6,6 +6,7 @@ import com.greenmono.mealplanner.dto.IngredientResponse;
 import com.greenmono.mealplanner.dto.PageResponse;
 import com.greenmono.mealplanner.entity.Ingredient;
 import com.greenmono.mealplanner.exception.DuplicateIngredientException;
+import com.greenmono.mealplanner.exception.IngredientNotFoundException;
 import com.greenmono.mealplanner.service.IngredientService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,9 +28,8 @@ import java.util.Collections;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -568,5 +568,40 @@ class IngredientControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.content[0].name", is("Zucchini")))
                 .andExpect(jsonPath("$.content[1].name", is("Apple")));
+    }
+
+    @Test
+    @DisplayName("Should return 204 NO CONTENT when ingredient is successfully deleted")
+    void shouldReturnNoContentWhenIngredientIsDeleted() throws Exception {
+        // Arrange
+        Long ingredientId = 1L;
+        doNothing().when(ingredientService).deleteIngredient(ingredientId);
+
+        // Act & Assert
+        mockMvc.perform(delete("/api/ingredients/{id}", ingredientId))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+
+        verify(ingredientService).deleteIngredient(ingredientId);
+    }
+
+    @Test
+    @DisplayName("Should return 404 NOT FOUND when ingredient does not exist")
+    void shouldReturnNotFoundWhenIngredientDoesNotExist() throws Exception {
+        // Arrange
+        Long ingredientId = 999L;
+        doThrow(new IngredientNotFoundException("Ingredient not found with id: 999"))
+                .when(ingredientService).deleteIngredient(ingredientId);
+
+        // Act & Assert
+        mockMvc.perform(delete("/api/ingredients/{id}", ingredientId))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.error", is("Not Found")))
+                .andExpect(jsonPath("$.message", containsString("Ingredient not found with id: 999")));
+
+        verify(ingredientService).deleteIngredient(ingredientId);
     }
 }
