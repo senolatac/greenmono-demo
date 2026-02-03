@@ -11,15 +11,10 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOrigins("*")
+                .allowedOrigins("http://localhost:3000")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
+                .allowCredentials(true)
                 .maxAge(3600);
-    }
-
-    @Override
-    public void addViewControllers(ViewControllerRegistry registry) {
-        // Redirect root to index.html
-        registry.addRedirectViewController("/", "/index.html");
     }
 }

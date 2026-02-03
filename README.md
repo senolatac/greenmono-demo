@@ -10,8 +10,11 @@ An intelligent meal planning system that creates balanced 5-day menus based on a
 - Intelligent 5-day menu planning
 - Nutritional balance scoring
 - Multi-user support
+- Interactive weekly menu table UI
 
 ## Quick Start
+
+### Backend
 
 ```bash
 # Build the project
@@ -21,6 +24,23 @@ mvn clean install
 mvn spring-boot:run
 ```
 
+The backend API will be available at http://localhost:8080
+
+### Frontend
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
+```
+
+The frontend will be available at http://localhost:3000
+
 ## Documentation
 
 - [Project Setup Guide](PROJECT_SETUP.md) - Detailed setup and configuration instructions
@@ -28,6 +48,7 @@ mvn spring-boot:run
 
 ## Technology Stack
 
+### Backend
 - Java 17
 - Spring Boot 3.2.1
 - PostgreSQL
@@ -36,15 +57,29 @@ mvn spring-boot:run
 - Lombok
 - Swagger/OpenAPI
 
+### Frontend
+- React 18
+- Vite
+- Axios
+- CSS3 with modern design
+
 ## Project Structure
 
 The project follows a standard Spring Boot layered architecture:
 
 ```
 weekly-meal-planner/
-├── src/
+├── src/                             # Backend source code
 │   ├── main/
 │   │   ├── java/com/greenmono/mealplanner/
+│   │   │   ├── config/              # Configuration classes
+│   │   │   │   └── WebConfig.java   # CORS configuration
+│   │   │   ├── controller/          # REST API controllers
+│   │   │   │   ├── MenuController.java
+│   │   │   │   └── IngredientController.java
+│   │   │   ├── dto/                 # Data Transfer Objects
+│   │   │   │   ├── SimplifiedMenuItemResponse.java
+│   │   │   │   └── MenuPlanResponse.java
 │   │   │   ├── entity/              # JPA entity classes
 │   │   │   │   ├── Ingredient.java
 │   │   │   │   ├── Meal.java
@@ -52,23 +87,27 @@ weekly-meal-planner/
 │   │   │   │   ├── MenuPlan.java
 │   │   │   │   └── DailyMealPlan.java
 │   │   │   ├── repository/          # Spring Data JPA repositories
-│   │   │   │   ├── IngredientRepository.java
-│   │   │   │   ├── MealRepository.java
-│   │   │   │   ├── NutritionalInfoRepository.java
-│   │   │   │   ├── MenuPlanRepository.java
-│   │   │   │   └── DailyMealPlanRepository.java
-│   │   │   └── MealPlannerApplication.java  # Main application class
+│   │   │   ├── service/             # Business logic services
+│   │   │   └── MealPlannerApplication.java
 │   │   └── resources/
 │   │       ├── db/migration/        # Flyway database migrations
-│   │       │   ├── V1__Create_ingredients_table.sql
-│   │       │   ├── V2__Create_meals_table.sql
-│   │       │   ├── V3__Create_nutritional_info_table.sql
-│   │       │   └── V4__Create_menu_plans_tables.sql
 │   │       ├── application.yml      # Main configuration
 │   │       └── application-dev.yml  # Development profile configuration
-│   └── test/
-│       └── resources/
-│           └── application-test.yml # Test profile configuration
+│   └── test/                        # Test source code
+├── frontend/                        # Frontend application
+│   ├── src/
+│   │   ├── components/              # React components
+│   │   │   ├── WeeklyMenuTable.jsx  # Weekly menu table component
+│   │   │   └── WeeklyMenuTable.css  # Component styles
+│   │   ├── services/                # API services
+│   │   │   └── menuService.js       # Menu API client
+│   │   ├── App.jsx                  # Root component
+│   │   ├── App.css                  # Global styles
+│   │   └── main.jsx                 # Application entry point
+│   ├── index.html                   # HTML template
+│   ├── vite.config.js               # Vite configuration
+│   ├── package.json                 # Node.js dependencies
+│   └── README.md                    # Frontend documentation
 ├── pom.xml                          # Maven project configuration
 ├── PROJECT_SETUP.md                 # Detailed setup instructions
 ├── DATABASE_SCHEMA.md               # Database schema documentation
@@ -77,10 +116,19 @@ weekly-meal-planner/
 
 ### Key Components
 
+#### Backend
 - **Entity Layer**: JPA entities representing database tables with relationships and constraints
 - **Repository Layer**: Spring Data JPA repositories with custom query methods for data access
+- **Service Layer**: Business logic for menu planning and ingredient management
+- **Controller Layer**: REST API endpoints for frontend communication
 - **Database Migrations**: Flyway versioned scripts for schema management and evolution
 - **Configuration**: Profile-based configuration (dev, test) for different environments
+
+#### Frontend
+- **WeeklyMenuTable Component**: Main UI component displaying 5-day menu in table format
+- **API Service**: Axios-based service for backend communication
+- **Responsive Design**: Mobile-first CSS with modern styling
+- **State Management**: React hooks for local state and API data
 
 ## API Documentation
 
@@ -103,16 +151,37 @@ Current implementation includes:
 - Complete database schema design
 - JPA entity classes with relationships
 - Repository layer with custom queries
+- Service layer with menu generation algorithm
+- REST API controllers for menu management
 - Flyway database migrations
 - API documentation setup
+- React frontend with weekly menu table display
+- CORS configuration for frontend-backend communication
+
+## Features Implemented
+
+### Backend
+- 5-day balanced menu generation algorithm
+- Menu plan storage and retrieval
+- Recipe and ingredient management
+- Nutritional tracking
+- RESTful API endpoints
+
+### Frontend
+- Weekly menu table display (Monday-Friday)
+- "Yeni Menü Oluştur" button for menu generation
+- Date and meal name display for each day
+- Error handling and loading states
+- Responsive design for all devices
+- Clean, modern UI with gradient styling
 
 ## Next Steps
 
-- Service layer implementation
-- REST API controllers
-- Menu generation algorithm
-- Nutritional balance calculator
-- Authentication and authorization
+- User authentication and authorization
+- Ingredient inventory management UI
+- Recipe detail views
+- Nutritional information display
+- Shopping list generation
 - Comprehensive testing suite
 
 ## License
