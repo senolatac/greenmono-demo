@@ -26,6 +26,7 @@ public class MenuPlannerService {
     private final IngredientRepository ingredientRepository;
     private final MenuPlanRepository menuPlanRepository;
     private final MenuPlanService menuPlanService;
+    private final NutritionCalculatorService nutritionCalculatorService;
 
     private static final int PLANNING_DAYS = 5;
     private static final int MEALS_PER_DAY = 3; // Breakfast, Lunch, Dinner
@@ -180,6 +181,15 @@ public class MenuPlannerService {
             // Calculate total calories for the day
             int totalCalories = calculateDailyCalories(breakfast, lunch, dinner);
             dailyPlan.setTotalCalories(totalCalories);
+
+            // Validate daily nutrition (protein 20-30g, carbs 50-80g)
+            var dailyNutrition = nutritionCalculatorService.calculateDailyNutrition(
+                java.util.Arrays.asList(breakfast, lunch, dinner)
+            );
+            boolean nutritionValid = nutritionCalculatorService.validateDailyNutrition(dailyNutrition);
+            log.debug("Day {} nutrition validation: {} (Protein: {}g, Carbs: {}g)",
+                day, nutritionValid ? "PASS" : "FAIL",
+                dailyNutrition.getProtein(), dailyNutrition.getCarbohydrates());
 
             dailyPlans.add(dailyPlan);
 

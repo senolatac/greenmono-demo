@@ -30,6 +30,7 @@ public class RecipeService {
     private final RecipeRepository recipeRepository;
     private final IngredientRepository ingredientRepository;
     private final RecipeMapper recipeMapper;
+    private final NutritionCalculatorService nutritionCalculatorService;
 
     @Transactional
     public RecipeResponse createRecipe(RecipeRequest request) {
@@ -69,6 +70,29 @@ public class RecipeService {
 
                 recipe.addRecipeIngredient(recipeIngredient);
             });
+        }
+
+        // Calculate nutrition from ingredients if not provided
+        if (!recipe.getRecipeIngredients().isEmpty() &&
+            (request.getCalories() == null || request.getProtein() == null || request.getCarbohydrates() == null)) {
+            log.info("Calculating nutrition from ingredients for recipe: {}", recipe.getName());
+            var calculatedNutrition = nutritionCalculatorService.calculateRecipeNutrition(recipe.getRecipeIngredients());
+
+            if (request.getCalories() == null) {
+                recipe.setCalories(calculatedNutrition.getCalories());
+            }
+            if (request.getProtein() == null) {
+                recipe.setProtein(calculatedNutrition.getProtein());
+            }
+            if (request.getCarbohydrates() == null) {
+                recipe.setCarbohydrates(calculatedNutrition.getCarbohydrates());
+            }
+            if (request.getFat() == null) {
+                recipe.setFat(calculatedNutrition.getFat());
+            }
+            if (request.getFiber() == null) {
+                recipe.setFiber(calculatedNutrition.getFiber());
+            }
         }
 
         // Save to database
@@ -213,6 +237,29 @@ public class RecipeService {
 
                 recipe.addRecipeIngredient(recipeIngredient);
             });
+        }
+
+        // Recalculate nutrition from ingredients if ingredients changed
+        if (!recipe.getRecipeIngredients().isEmpty() &&
+            (request.getCalories() == null || request.getProtein() == null || request.getCarbohydrates() == null)) {
+            log.info("Recalculating nutrition from ingredients for recipe: {}", recipe.getName());
+            var calculatedNutrition = nutritionCalculatorService.calculateRecipeNutrition(recipe.getRecipeIngredients());
+
+            if (request.getCalories() == null) {
+                recipe.setCalories(calculatedNutrition.getCalories());
+            }
+            if (request.getProtein() == null) {
+                recipe.setProtein(calculatedNutrition.getProtein());
+            }
+            if (request.getCarbohydrates() == null) {
+                recipe.setCarbohydrates(calculatedNutrition.getCarbohydrates());
+            }
+            if (request.getFat() == null) {
+                recipe.setFat(calculatedNutrition.getFat());
+            }
+            if (request.getFiber() == null) {
+                recipe.setFiber(calculatedNutrition.getFiber());
+            }
         }
 
         Recipe updatedRecipe = recipeRepository.save(recipe);
