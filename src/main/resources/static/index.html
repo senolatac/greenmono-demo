@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malzeme Yönetimi - Weekly Meal Planner</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Malzeme Yönetimi</h1>
+            <p class="subtitle">Dolabınızdaki malzemeleri ekleyin ve yönetin</p>
+        </header>
+
+        <main>
+            <!-- Malzeme Ekleme Formu -->
+            <section class="card form-section">
+                <h2>Yeni Malzeme Ekle</h2>
+                <form id="ingredientForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Malzeme Adı *</label>
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                required
+                                maxlength="100"
+                                placeholder="Örn: Domates, Tavuk göğsü">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="category">Kategori *</label>
+                            <select id="category" name="category" required>
+                                <option value="">Seçiniz...</option>
+                                <option value="VEGETABLES">Sebzeler</option>
+                                <option value="FRUITS">Meyveler</option>
+                                <option value="MEAT">Et</option>
+                                <option value="POULTRY">Kümes Hayvanları</option>
+                                <option value="FISH">Balık</option>
+                                <option value="SEAFOOD">Deniz Ürünleri</option>
+                                <option value="DAIRY">Süt Ürünleri</option>
+                                <option value="GRAINS">Tahıllar</option>
+                                <option value="LEGUMES">Baklagiller</option>
+                                <option value="NUTS_SEEDS">Kuruyemiş ve Tohumlar</option>
+                                <option value="HERBS_SPICES">Otlar ve Baharatlar</option>
+                                <option value="OILS_FATS">Yağlar</option>
+                                <option value="CONDIMENTS">Soslar ve Çeşniler</option>
+                                <option value="BEVERAGES">İçecekler</option>
+                                <option value="OTHER">Diğer</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quantity">Miktar *</label>
+                            <input
+                                type="number"
+                                id="quantity"
+                                name="quantity"
+                                required
+                                min="0.01"
+                                step="0.01"
+                                placeholder="Örn: 500">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="unit">Birim *</label>
+                            <select id="unit" name="unit" required>
+                                <option value="">Seçiniz...</option>
+                                <option value="GRAM">Gram</option>
+                                <option value="KILOGRAM">Kilogram</option>
+                                <option value="MILLILITER">Mililitre</option>
+                                <option value="LITER">Litre</option>
+                                <option value="PIECE">Adet</option>
+                                <option value="TABLESPOON">Yemek Kaşığı</option>
+                                <option value="TEASPOON">Çay Kaşığı</option>
+                                <option value="CUP">Fincan</option>
+                                <option value="OUNCE">Ons</option>
+                                <option value="POUND">Pound</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expiryDate">Son Kullanma Tarihi</label>
+                            <input type="date" id="expiryDate" name="expiryDate">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="available">
+                                <input type="checkbox" id="available" name="available" checked>
+                                Mevcut
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notlar</label>
+                        <textarea
+                            id="notes"
+                            name="notes"
+                            rows="3"
+                            maxlength="500"
+                            placeholder="Malzeme hakkında ek notlar..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            Malzeme Ekle
+                        </button>
+                        <button type="reset" class="btn btn-secondary">
+                            Formu Temizle
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Filtreler -->
+            <section class="filters-section">
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="filterCategory">Kategori Filtrele:</label>
+                        <select id="filterCategory">
+                            <option value="">Tümü</option>
+                            <option value="VEGETABLES">Sebzeler</option>
+                            <option value="FRUITS">Meyveler</option>
+                            <option value="MEAT">Et</option>
+                            <option value="POULTRY">Kümes Hayvanları</option>
+                            <option value="FISH">Balık</option>
+                            <option value="SEAFOOD">Deniz Ürünleri</option>
+                            <option value="DAIRY">Süt Ürünleri</option>
+                            <option value="GRAINS">Tahıllar</option>
+                            <option value="LEGUMES">Baklagiller</option>
+                            <option value="NUTS_SEEDS">Kuruyemiş ve Tohumlar</option>
+                            <option value="HERBS_SPICES">Otlar ve Baharatlar</option>
+                            <option value="OILS_FATS">Yağlar</option>
+                            <option value="CONDIMENTS">Soslar ve Çeşniler</option>
+                            <option value="BEVERAGES">İçecekler</option>
+                            <option value="OTHER">Diğer</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" onclick="refreshIngredients()">
+                        Yenile
+                    </button>
+                </div>
+            </section>
+
+            <!-- Malzeme Listesi -->
+            <section class="card list-section">
+                <h2>Malzeme Listesi</h2>
+                <div id="loadingSpinner" class="loading" style="display: none;">
+                    Yükleniyor...
+                </div>
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+                <div id="successMessage" class="success-message" style="display: none;"></div>
+
+                <div class="table-container">
+                    <table id="ingredientsTable">
+                        <thead>
+                            <tr>
+                                <th>Malzeme Adı</th>
+                                <th>Kategori</th>
+                                <th>Miktar</th>
+                                <th>Birim</th>
+                                <th>Son Kullanma</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ingredientsTableBody">
+                            <tr>
+                                <td colspan="7" class="no-data">Henüz malzeme eklenmedi</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div id="pagination" class="pagination" style="display: none;">
+                    <button id="prevPage" class="btn btn-secondary" disabled>Önceki</button>
+                    <span id="pageInfo">Sayfa 1 / 1</span>
+                    <button id="nextPage" class="btn btn-secondary" disabled>Sonraki</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 Weekly Meal Planner. Tüm hakları saklıdır.</p>
+        </footer>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Malzemeyi Sil</h3>
+            <p>Bu malzemeyi silmek istediğinizden emin misiniz?</p>
+            <div class="modal-actions">
+                <button class="btn btn-danger" onclick="confirmDelete()">Sil</button>
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
