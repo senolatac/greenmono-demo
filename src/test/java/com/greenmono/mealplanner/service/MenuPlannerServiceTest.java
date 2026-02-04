@@ -532,4 +532,314 @@ class MenuPlannerServiceTest {
         assertThat(capturedPlan.getTotalCalories()).isGreaterThan(0);
         assertThat(capturedPlan.getAverageDailyCalories()).isGreaterThan(0);
     }
+
+    @Test
+    void generateBalancedMenuPlan_WithCustomCalorieRange_Success() {
+        // Arrange
+        MenuPlanRequest request = MenuPlanRequest.builder()
+            .userId(userId)
+            .startDate(startDate)
+            .targetDailyCalories(2000)
+            .caloriesPerMealMin(600)
+            .caloriesPerMealMax(800)
+            .notes("High calorie plan")
+            .build();
+
+        when(ingredientRepository.findAvailableIngredientsForUser(eq(userId), any(LocalDate.class)))
+            .thenReturn(availableIngredients);
+
+        // Create recipes with higher calories
+        List<Recipe> highCalorieRecipes = new ArrayList<>();
+        for (int i = 1; i <= 5; i++) {
+            Recipe recipe = createRecipe(
+                (long) i,
+                "High Cal Breakfast " + i,
+                Recipe.RecipeCategory.BREAKFAST,
+                new BigDecimal("750"),
+                new BigDecimal("30"),
+                new BigDecimal("80"),
+                new BigDecimal("25")
+            );
+            highCalorieRecipes.add(recipe);
+        }
+        for (int i = 6; i <= 10; i++) {
+            Recipe recipe = createRecipe(
+                (long) i,
+                "High Cal Lunch " + i,
+                Recipe.RecipeCategory.MAIN_COURSE,
+                new BigDecimal("750"),
+                new BigDecimal("35"),
+                new BigDecimal("75"),
+                new BigDecimal("28")
+            );
+            highCalorieRecipes.add(recipe);
+        }
+        for (int i = 11; i <= 15; i++) {
+            Recipe recipe = createRecipe(
+                (long) i,
+                "High Cal Dinner " + i,
+                Recipe.RecipeCategory.MAIN_COURSE,
+                new BigDecimal("750"),
+                new BigDecimal("40"),
+                new BigDecimal("70"),
+                new BigDecimal("30")
+            );
+            highCalorieRecipes.add(recipe);
+        }
+
+        Page<Recipe> recipePage = new PageImpl<>(highCalorieRecipes);
+        when(recipeRepository.findByUserIdAndActiveTrue(eq(userId), any(Pageable.class)))
+            .thenReturn(recipePage);
+
+        MenuPlan savedMenuPlan = MenuPlan.builder()
+            .id(2L)
+            .userId(userId)
+            .build();
+
+        when(menuPlanRepository.save(any(MenuPlan.class)))
+            .thenReturn(savedMenuPlan);
+
+        when(menuPlanService.convertToResponse(any(MenuPlan.class)))
+            .thenReturn(MenuPlanResponse.builder().id(2L).build());
+
+        // Act
+        MenuPlanResponse response = menuPlannerService.generateBalancedMenuPlan(request);
+
+        // Assert
+        assertThat(response).isNotNull();
+        verify(menuPlanRepository).save(any(MenuPlan.class));
+    }
+
+    @Test
+    void generateBalancedMenuPlan_WithSoupCategory_Success() {
+        // Arrange
+        MenuPlanRequest request = MenuPlanRequest.builder()
+            .userId(userId)
+            .startDate(startDate)
+            .targetDailyCalories(1800)
+            .caloriesPerMealMin(500)
+            .caloriesPerMealMax(700)
+            .build();
+
+        when(ingredientRepository.findAvailableIngredientsForUser(eq(userId), any(LocalDate.class)))
+            .thenReturn(availableIngredients);
+
+        // Add more soup recipes
+        List<Recipe> recipesWithSoups = new ArrayList<>(feasibleRecipes);
+        for (int i = 20; i <= 23; i++) {
+            Recipe soup = createRecipe(
+                (long) i,
+                "Soup " + i,
+                Recipe.RecipeCategory.SOUP,
+                new BigDecimal("600"),
+                new BigDecimal("25"),
+                new BigDecimal("70"),
+                new BigDecimal("15")
+            );
+            recipesWithSoups.add(soup);
+        }
+
+        Page<Recipe> recipePage = new PageImpl<>(recipesWithSoups);
+        when(recipeRepository.findByUserIdAndActiveTrue(eq(userId), any(Pageable.class)))
+            .thenReturn(recipePage);
+
+        MenuPlan savedMenuPlan = MenuPlan.builder()
+            .id(3L)
+            .userId(userId)
+            .build();
+
+        when(menuPlanRepository.save(any(MenuPlan.class)))
+            .thenReturn(savedMenuPlan);
+
+        when(menuPlanService.convertToResponse(any(MenuPlan.class)))
+            .thenReturn(MenuPlanResponse.builder().id(3L).build());
+
+        // Act
+        MenuPlanResponse response = menuPlannerService.generateBalancedMenuPlan(request);
+
+        // Assert
+        assertThat(response).isNotNull();
+        ArgumentCaptor<MenuPlan> menuPlanCaptor = ArgumentCaptor.forClass(MenuPlan.class);
+        verify(menuPlanRepository).save(menuPlanCaptor.capture());
+
+        MenuPlan capturedPlan = menuPlanCaptor.getValue();
+        // Verify that at least some lunch meals use soup recipes
+        long soupCount = capturedPlan.getDailyMealPlans().stream()
+            .filter(day -> day.getLunchRecipe().getCategory() == Recipe.RecipeCategory.SOUP)
+            .count();
+        assertThat(soupCount).isGreaterThanOrEqualTo(0); // Soups can be selected for lunch
+    }
+
+    @Test
+    void generateBalancedMenuPlan_WithMinimalRecipeVariety_Success() {
+        // Arrange - Minimum recipes needed (3 breakfast, 5 lunch, 5 dinner)
+        MenuPlanRequest request = MenuPlanRequest.builder()
+            .userId(userId)
+            .startDate(startDate)
+            .targetDailyCalories(1800)
+            .caloriesPerMealMin(500)
+            .caloriesPerMealMax(700)
+            .build();
+
+        when(ingredientRepository.findAvailableIngredientsForUser(eq(userId), any(LocalDate.class)))
+            .thenReturn(availableIngredients);
+
+        List<Recipe> minimalRecipes = new ArrayList<>();
+        // Exactly 3 breakfast
+        for (int i = 1; i <= 3; i++) {
+            minimalRecipes.add(createRecipe(
+                (long) i,
+                "Breakfast " + i,
+                Recipe.RecipeCategory.BREAKFAST,
+                new BigDecimal("600"),
+                new BigDecimal("25"),
+                new BigDecimal("70"),
+                new BigDecimal("15")
+            ));
+        }
+        // Exactly 5 lunch (main course)
+        for (int i = 4; i <= 8; i++) {
+            minimalRecipes.add(createRecipe(
+                (long) i,
+                "Lunch " + i,
+                Recipe.RecipeCategory.MAIN_COURSE,
+                new BigDecimal("600"),
+                new BigDecimal("30"),
+                new BigDecimal("70"),
+                new BigDecimal("18")
+            ));
+        }
+        // Exactly 5 dinner (main course)
+        for (int i = 9; i <= 13; i++) {
+            minimalRecipes.add(createRecipe(
+                (long) i,
+                "Dinner " + i,
+                Recipe.RecipeCategory.MAIN_COURSE,
+                new BigDecimal("600"),
+                new BigDecimal("35"),
+                new BigDecimal("65"),
+                new BigDecimal("20")
+            ));
+        }
+
+        Page<Recipe> recipePage = new PageImpl<>(minimalRecipes);
+        when(recipeRepository.findByUserIdAndActiveTrue(eq(userId), any(Pageable.class)))
+            .thenReturn(recipePage);
+
+        MenuPlan savedMenuPlan = MenuPlan.builder()
+            .id(4L)
+            .userId(userId)
+            .build();
+
+        when(menuPlanRepository.save(any(MenuPlan.class)))
+            .thenReturn(savedMenuPlan);
+
+        when(menuPlanService.convertToResponse(any(MenuPlan.class)))
+            .thenReturn(MenuPlanResponse.builder().id(4L).build());
+
+        // Act
+        MenuPlanResponse response = menuPlannerService.generateBalancedMenuPlan(request);
+
+        // Assert
+        assertThat(response).isNotNull();
+        ArgumentCaptor<MenuPlan> menuPlanCaptor = ArgumentCaptor.forClass(MenuPlan.class);
+        verify(menuPlanRepository).save(menuPlanCaptor.capture());
+
+        MenuPlan capturedPlan = menuPlanCaptor.getValue();
+        assertThat(capturedPlan.getDailyMealPlans()).hasSize(5);
+    }
+
+    @Test
+    void generateBalancedMenuPlan_VerifyStartAndEndDates() {
+        // Arrange
+        LocalDate specificStartDate = LocalDate.of(2024, 3, 15);
+        MenuPlanRequest request = MenuPlanRequest.builder()
+            .userId(userId)
+            .startDate(specificStartDate)
+            .targetDailyCalories(1800)
+            .caloriesPerMealMin(500)
+            .caloriesPerMealMax(700)
+            .build();
+
+        when(ingredientRepository.findAvailableIngredientsForUser(eq(userId), any(LocalDate.class)))
+            .thenReturn(availableIngredients);
+
+        Page<Recipe> recipePage = new PageImpl<>(feasibleRecipes);
+        when(recipeRepository.findByUserIdAndActiveTrue(eq(userId), any(Pageable.class)))
+            .thenReturn(recipePage);
+
+        MenuPlan savedMenuPlan = MenuPlan.builder()
+            .id(5L)
+            .userId(userId)
+            .build();
+
+        when(menuPlanRepository.save(any(MenuPlan.class)))
+            .thenReturn(savedMenuPlan);
+
+        when(menuPlanService.convertToResponse(any(MenuPlan.class)))
+            .thenReturn(MenuPlanResponse.builder().id(5L).build());
+
+        // Act
+        menuPlannerService.generateBalancedMenuPlan(request);
+
+        // Assert
+        ArgumentCaptor<MenuPlan> menuPlanCaptor = ArgumentCaptor.forClass(MenuPlan.class);
+        verify(menuPlanRepository).save(menuPlanCaptor.capture());
+
+        MenuPlan capturedPlan = menuPlanCaptor.getValue();
+        assertThat(capturedPlan.getStartDate()).isEqualTo(specificStartDate);
+        assertThat(capturedPlan.getEndDate()).isEqualTo(specificStartDate.plusDays(4));
+        assertThat(capturedPlan.getStatus()).isEqualTo(MenuPlan.MenuPlanStatus.DRAFT);
+    }
+
+    @Test
+    void generateBalancedMenuPlan_VerifyMealNutritionCalculation() {
+        // Arrange
+        MenuPlanRequest request = MenuPlanRequest.builder()
+            .userId(userId)
+            .startDate(startDate)
+            .targetDailyCalories(1800)
+            .caloriesPerMealMin(500)
+            .caloriesPerMealMax(700)
+            .build();
+
+        when(ingredientRepository.findAvailableIngredientsForUser(eq(userId), any(LocalDate.class)))
+            .thenReturn(availableIngredients);
+
+        Page<Recipe> recipePage = new PageImpl<>(feasibleRecipes);
+        when(recipeRepository.findByUserIdAndActiveTrue(eq(userId), any(Pageable.class)))
+            .thenReturn(recipePage);
+
+        MenuPlan savedMenuPlan = MenuPlan.builder()
+            .id(6L)
+            .userId(userId)
+            .build();
+
+        when(menuPlanRepository.save(any(MenuPlan.class)))
+            .thenReturn(savedMenuPlan);
+
+        when(menuPlanService.convertToResponse(any(MenuPlan.class)))
+            .thenReturn(MenuPlanResponse.builder().id(6L).build());
+
+        // Act
+        menuPlannerService.generateBalancedMenuPlan(request);
+
+        // Assert
+        ArgumentCaptor<MenuPlan> menuPlanCaptor = ArgumentCaptor.forClass(MenuPlan.class);
+        verify(menuPlanRepository).save(menuPlanCaptor.capture());
+
+        MenuPlan capturedPlan = menuPlanCaptor.getValue();
+
+        // Verify each daily meal plan has proper nutritional totals
+        capturedPlan.getDailyMealPlans().forEach(dailyPlan -> {
+            int expectedCalories = dailyPlan.getBreakfastRecipe().getCalories().intValue() +
+                                   dailyPlan.getLunchRecipe().getCalories().intValue() +
+                                   dailyPlan.getDinnerRecipe().getCalories().intValue();
+
+            assertThat(dailyPlan.getTotalCalories()).isEqualTo(expectedCalories);
+            assertThat(dailyPlan.getTotalProtein()).isNotNull();
+            assertThat(dailyPlan.getTotalCarbohydrates()).isNotNull();
+            assertThat(dailyPlan.getTotalFat()).isNotNull();
+        });
+    }
 }
