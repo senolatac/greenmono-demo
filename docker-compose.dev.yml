@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for development
+  database:
+    image: postgres:15-alpine
+    container_name: meal-planner-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-meal_planner_db}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    networks:
+      - meal-planner-network-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-meal_planner_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # pgAdmin for database management (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: meal-planner-pgadmin-dev
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@mealplanner.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    depends_on:
+      - database
+    networks:
+      - meal-planner-network-dev
+    volumes:
+      - pgadmin_data_dev:/var/lib/pgadmin
+
+networks:
+  meal-planner-network-dev:
+    driver: bridge
+    name: meal-planner-network-dev
+
+volumes:
+  postgres_data_dev:
+    name: meal-planner-postgres-data-dev
+  pgadmin_data_dev:
+    name: meal-planner-pgadmin-data-dev

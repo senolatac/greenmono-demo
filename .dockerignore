@@ -1,0 +1,54 @@
+# Docker ignore file for backend
+
+# Build outputs
+target/
+!target/*.jar
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+
+# Docker files
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Frontend directory
+frontend/
+
+# Test files
+src/test/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~

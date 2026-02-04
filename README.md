@@ -14,7 +14,52 @@ An intelligent meal planning system that creates balanced 5-day menus based on a
 
 ## Quick Start
 
-### Backend
+### Docker (Recommended)
+
+The easiest way to run the entire application with all dependencies:
+
+```bash
+# Copy environment configuration
+cp .env.example .env
+
+# Start all services (backend + frontend + database)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+```
+
+Access the application:
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8080
+- **API Documentation**: http://localhost:8080/swagger-ui.html
+
+Stop the application:
+```bash
+docker-compose down
+```
+
+For detailed Docker deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+### Using Makefile (Convenient)
+
+```bash
+# View all available commands
+make help
+
+# Setup and start
+make up
+
+# View logs
+make logs
+
+# Stop services
+make down
+```
+
+### Manual Setup (Development)
+
+#### Backend
 
 ```bash
 # Build the project
@@ -26,7 +71,7 @@ mvn spring-boot:run
 
 The backend API will be available at http://localhost:8080
 
-### Frontend
+#### Frontend
 
 ```bash
 # Navigate to frontend directory
@@ -43,6 +88,7 @@ The frontend will be available at http://localhost:3000
 
 ## Documentation
 
+- [Deployment Guide](DEPLOYMENT.md) - Docker deployment and production setup
 - [Project Setup Guide](PROJECT_SETUP.md) - Detailed setup and configuration instructions
 - [Database Schema](DATABASE_SCHEMA.md) - Complete database schema documentation
 

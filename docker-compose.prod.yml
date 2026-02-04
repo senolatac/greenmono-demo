@@ -1,0 +1,66 @@
+version: '3.8'
+
+# Production override configuration
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  database:
+    restart: always
+    # Don't expose database port to host in production
+    ports: []
+    environment:
+      # Use strong passwords from environment
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password is required}
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  backend:
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      # Enhanced JVM settings for production
+      JAVA_OPTS: >-
+        -XX:+UseContainerSupport
+        -XX:MaxRAMPercentage=75.0
+        -XX:InitialRAMPercentage=50.0
+        -XX:+UseG1GC
+        -XX:MaxGCPauseMillis=200
+        -XX:+HeapDumpOnOutOfMemoryError
+        -XX:HeapDumpPath=/tmp/heapdump.hprof
+        -Dspring.profiles.active=prod
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    # Production logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
