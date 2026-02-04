@@ -54,6 +54,23 @@ open http://localhost:8080/swagger-ui.html
 open http://localhost:8080/index.html
 ```
 
+The backend API will be available at http://localhost:8080
+
+### Frontend
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
+```
+
+The frontend will be available at http://localhost:3000
+
 ## Documentation
 
 - [Project Setup Guide](PROJECT_SETUP.md) - Detailed setup and configuration instructions
@@ -73,15 +90,29 @@ open http://localhost:8080/index.html
 - **Build Tool**: Maven 3.x
 - **Frontend**: Vanilla JavaScript, HTML5, CSS3
 
+### Frontend
+- React 18
+- Vite
+- Axios
+- CSS3 with modern design
+
 ## Project Structure
 
 The project follows a standard Spring Boot layered architecture:
 
 ```
 weekly-meal-planner/
-├── src/
+├── src/                             # Backend source code
 │   ├── main/
 │   │   ├── java/com/greenmono/mealplanner/
+│   │   │   ├── config/              # Configuration classes
+│   │   │   │   └── WebConfig.java   # CORS configuration
+│   │   │   ├── controller/          # REST API controllers
+│   │   │   │   ├── MenuController.java
+│   │   │   │   └── IngredientController.java
+│   │   │   ├── dto/                 # Data Transfer Objects
+│   │   │   │   ├── SimplifiedMenuItemResponse.java
+│   │   │   │   └── MenuPlanResponse.java
 │   │   │   ├── entity/              # JPA entity classes
 │   │   │   │   ├── Ingredient.java
 │   │   │   │   ├── Meal.java
@@ -89,23 +120,27 @@ weekly-meal-planner/
 │   │   │   │   ├── MenuPlan.java
 │   │   │   │   └── DailyMealPlan.java
 │   │   │   ├── repository/          # Spring Data JPA repositories
-│   │   │   │   ├── IngredientRepository.java
-│   │   │   │   ├── MealRepository.java
-│   │   │   │   ├── NutritionalInfoRepository.java
-│   │   │   │   ├── MenuPlanRepository.java
-│   │   │   │   └── DailyMealPlanRepository.java
-│   │   │   └── MealPlannerApplication.java  # Main application class
+│   │   │   ├── service/             # Business logic services
+│   │   │   └── MealPlannerApplication.java
 │   │   └── resources/
 │   │       ├── db/migration/        # Flyway database migrations
-│   │       │   ├── V1__Create_ingredients_table.sql
-│   │       │   ├── V2__Create_meals_table.sql
-│   │       │   ├── V3__Create_nutritional_info_table.sql
-│   │       │   └── V4__Create_menu_plans_tables.sql
 │   │       ├── application.yml      # Main configuration
 │   │       └── application-dev.yml  # Development profile configuration
-│   └── test/
-│       └── resources/
-│           └── application-test.yml # Test profile configuration
+│   └── test/                        # Test source code
+├── frontend/                        # Frontend application
+│   ├── src/
+│   │   ├── components/              # React components
+│   │   │   ├── WeeklyMenuTable.jsx  # Weekly menu table component
+│   │   │   └── WeeklyMenuTable.css  # Component styles
+│   │   ├── services/                # API services
+│   │   │   └── menuService.js       # Menu API client
+│   │   ├── App.jsx                  # Root component
+│   │   ├── App.css                  # Global styles
+│   │   └── main.jsx                 # Application entry point
+│   ├── index.html                   # HTML template
+│   ├── vite.config.js               # Vite configuration
+│   ├── package.json                 # Node.js dependencies
+│   └── README.md                    # Frontend documentation
 ├── pom.xml                          # Maven project configuration
 ├── PROJECT_SETUP.md                 # Detailed setup instructions
 ├── DATABASE_SCHEMA.md               # Database schema documentation
@@ -114,10 +149,19 @@ weekly-meal-planner/
 
 ### Key Components
 
+#### Backend
 - **Entity Layer**: JPA entities representing database tables with relationships and constraints
 - **Repository Layer**: Spring Data JPA repositories with custom query methods for data access
+- **Service Layer**: Business logic for menu planning and ingredient management
+- **Controller Layer**: REST API endpoints for frontend communication
 - **Database Migrations**: Flyway versioned scripts for schema management and evolution
 - **Configuration**: Profile-based configuration (dev, test) for different environments
+
+#### Frontend
+- **WeeklyMenuTable Component**: Main UI component displaying 5-day menu in table format
+- **API Service**: Axios-based service for backend communication
+- **Responsive Design**: Mobile-first CSS with modern styling
+- **State Management**: React hooks for local state and API data
 
 ## API Documentation
 
