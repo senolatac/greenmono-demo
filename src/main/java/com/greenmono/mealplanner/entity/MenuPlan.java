@@ -3,10 +3,7 @@ package com.greenmono.mealplanner.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -65,6 +62,8 @@ public class MenuPlan {
 
     @OneToMany(mappedBy = "menuPlan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<DailyMealPlan> dailyMealPlans = new HashSet<>();
 
     @NotNull(message = "Status is required")

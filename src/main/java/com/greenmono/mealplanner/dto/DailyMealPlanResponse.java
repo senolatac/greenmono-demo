@@ -16,9 +16,9 @@ public class DailyMealPlanResponse {
     private Long id;
     private Integer dayNumber;
     private LocalDate mealDate;
-    private RecipeResponse breakfastRecipe;
-    private RecipeResponse lunchRecipe;
-    private RecipeResponse dinnerRecipe;
+    private RecipeResponse soupRecipe;
+    private RecipeResponse mainCourseRecipe;
+    private RecipeResponse sideDishRecipe;
     private Integer totalCalories;
     private String notes;
 }

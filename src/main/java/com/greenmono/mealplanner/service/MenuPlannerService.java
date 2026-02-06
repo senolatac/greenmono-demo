@@ -11,9 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,90 +29,94 @@ public class MenuPlannerService {
     private final NutritionCalculatorService nutritionCalculatorService;
 
     private static final int PLANNING_DAYS = 5;
-    private static final int MEALS_PER_DAY = 3; // Breakfast, Lunch, Dinner
-    private static final double MIN_BALANCE_SCORE = 70.0;
-    private static final double PROTEIN_MIN_RATIO = 0.20; // 20% of calories
-    private static final double PROTEIN_MAX_RATIO = 0.35; // 35% of calories
-    private static final double CARB_MIN_RATIO = 0.45; // 45% of calories
-    private static final double CARB_MAX_RATIO = 0.65; // 65% of calories
 
     /**
-     * Generates a balanced 5-day menu plan based on available ingredients
+     * Generates a 5-day (Mon-Fri) menu plan with 3-component lunches:
+     * soup + main course + side dish.
      *
      * Algorithm:
-     * 1. Fetch available ingredients for user
-     * 2. Find all recipes that can be made with available ingredients
-     * 3. For each day (5 days):
-     *    - Select breakfast (BREAKFAST category, 500-700 kcal)
-     *    - Select lunch (MAIN_COURSE/SOUP, 500-700 kcal)
-     *    - Select dinner (MAIN_COURSE, 500-700 kcal)
-     * 4. Ensure constraints:
-     *    - No same recipe used 2 consecutive days
-     *    - Daily calorie target met
-     *    - Protein-carb balance maintained
-     * 5. Calculate balance score and mark as balanced if score > 70
+     * 1. Fetch all active recipes and categorize by SOUP / MAIN_COURSE / SIDE_DISH
+     * 2. Validate at least 1 recipe per category exists
+     * 3. Snap start date to Monday (if Sat/Sun, move to next Monday)
+     * 4. For 5 days (Mon-Fri): select 1 soup + 1 main course + 1 side dish
+     * 5. No same recipe on consecutive days (per category)
+     * 6. Total daily calories = sum of 3 components
+     * 7. Uses Collections.shuffle() for randomized selection
      */
     @Transactional
     public MenuPlanResponse generateBalancedMenuPlan(MenuPlanRequest request) {
-        log.info("Generating balanced menu plan for user {}", request.getUserId());
+        log.info("Generating 3-component menu plan for user {}", request.getUserId());
 
-        // Step 1: Get available ingredients
-        List<Ingredient> availableIngredients = ingredientRepository
-            .findAvailableIngredientsForUser(request.getUserId(), LocalDate.now());
-
-        if (availableIngredients.isEmpty()) {
-            throw new IllegalStateException("No available ingredients found for user");
-        }
-
-        Set<Long> availableIngredientIds = availableIngredients.stream()
-            .map(Ingredient::getId)
-            .collect(Collectors.toSet());
-
-        log.info("Found {} available ingredients", availableIngredients.size());
-
-        // Step 2: Find recipes that can be made with available ingredients
-        List<Recipe> allRecipes = recipeRepository.findByUserIdAndActiveTrue(
-            request.getUserId(),
+        // Step 1: Find all active recipes
+        List<Recipe> allRecipes = recipeRepository.findByActiveTrue(
             org.springframework.data.domain.Pageable.unpaged()
         ).getContent();
 
-        List<Recipe> feasibleRecipes = filterFeasibleRecipes(allRecipes, availableIngredientIds);
-
-        if (feasibleRecipes.isEmpty()) {
-            throw new IllegalStateException("No feasible recipes found with available ingredients");
+        if (allRecipes.isEmpty()) {
+            throw new IllegalStateException("No active recipes found");
         }
 
-        log.info("Found {} feasible recipes out of {} total recipes",
-            feasibleRecipes.size(), allRecipes.size());
+        // Step 2: Fetch available ingredients (user-specific or global)
+        List<Ingredient> availableIngredients = ingredientRepository
+            .findAvailableIngredientsForUserOrGlobal(request.getUserId(), LocalDate.now());
 
-        // Step 3: Create menu plan entity
+        if (availableIngredients.isEmpty()) {
+            throw new IllegalStateException("No available ingredients found");
+        }
+
+        Map<Long, Ingredient> availableById = availableIngredients.stream()
+            .filter(i -> i.getId() != null)
+            .collect(Collectors.toMap(Ingredient::getId, i -> i, (a, b) -> a));
+
+        // Step 3: Filter recipes by available ingredients
+        List<Recipe> eligibleRecipes = allRecipes.stream()
+            .filter(recipe -> isRecipeCookable(recipe, availableById))
+            .collect(Collectors.toList());
+
+        if (eligibleRecipes.isEmpty()) {
+            throw new IllegalStateException("No recipes match available ingredients");
+        }
+
+        // Step 4: Categorize recipes
+        List<Recipe> soups = filterRecipesByCategory(eligibleRecipes, Recipe.RecipeCategory.SOUP);
+        List<Recipe> mainCourses = filterRecipesByCategory(eligibleRecipes, Recipe.RecipeCategory.MAIN_COURSE);
+        List<Recipe> sideDishes = filterRecipesByCategory(eligibleRecipes, Recipe.RecipeCategory.SIDE_DISH);
+
+        log.info("Found {} soups, {} main courses, {} side dishes", soups.size(), mainCourses.size(), sideDishes.size());
+
+        if (soups.isEmpty() || mainCourses.isEmpty() || sideDishes.isEmpty()) {
+            throw new IllegalStateException(
+                String.format("Insufficient recipes. Need at least 1 soup, 1 main course, 1 side dish. Found: %d soups, %d main courses, %d side dishes",
+                    soups.size(), mainCourses.size(), sideDishes.size())
+            );
+        }
+
+        // Step 5: Snap start date to Monday
+        LocalDate startDate = snapToMonday(request.getStartDate());
+
+        // Step 6: Create menu plan entity
         MenuPlan menuPlan = MenuPlan.builder()
             .name("5-Day Balanced Menu Plan")
-            .description("Automatically generated balanced menu plan based on available ingredients")
+            .description("Automatically generated 3-component lunch menu (soup + main course + side dish)")
             .userId(request.getUserId())
-            .startDate(request.getStartDate())
-            .endDate(request.getStartDate().plusDays(PLANNING_DAYS - 1))
+            .startDate(startDate)
+            .endDate(startDate.plusDays(PLANNING_DAYS - 1))
             .status(MenuPlan.MenuPlanStatus.DRAFT)
             .notes(request.getNotes())
             .isBalanced(false)
             .build();
 
-        // Step 4: Generate daily meal plans
-        List<DailyMealPlan> dailyPlans = generateDailyMealPlans(
-            menuPlan,
-            feasibleRecipes,
-            request
-        );
-
+        // Step 7: Generate daily meal plans
+        List<DailyMealPlan> dailyPlans = generateDailyMealPlans(menuPlan, soups, mainCourses, sideDishes, startDate);
         menuPlan.setDailyMealPlans(new HashSet<>(dailyPlans));
 
-        // Step 5: Calculate nutrition metrics and balance score
+        // Step 8: Calculate nutrition metrics
         calculateNutritionMetrics(menuPlan);
         double balanceScore = calculateBalanceScore(menuPlan);
         menuPlan.setBalanceScore(balanceScore);
-        menuPlan.setIsBalanced(balanceScore >= MIN_BALANCE_SCORE);
+        menuPlan.setIsBalanced(balanceScore >= 70.0);
 
-        // Step 6: Save and return
+        // Step 9: Save and return
         MenuPlan savedPlan = menuPlanRepository.save(menuPlan);
         log.info("Menu plan created with balance score: {}", balanceScore);
 
@@ -120,181 +124,96 @@ public class MenuPlannerService {
     }
 
     /**
-     * Filters recipes that can be made with available ingredients
+     * Snaps a date to Monday. If the date is Saturday or Sunday, moves to next Monday.
+     * Otherwise returns the Monday of the same week.
      */
-    private List<Recipe> filterFeasibleRecipes(List<Recipe> recipes, Set<Long> availableIngredientIds) {
-        return recipes.stream()
-            .filter(recipe -> {
-                Set<Long> requiredIngredientIds = recipe.getRecipeIngredients().stream()
-                    .map(ri -> ri.getIngredient().getId())
-                    .collect(Collectors.toSet());
-
-                // Recipe is feasible if all required ingredients are available
-                return availableIngredientIds.containsAll(requiredIngredientIds);
-            })
-            .collect(Collectors.toList());
+    LocalDate snapToMonday(LocalDate date) {
+        DayOfWeek dayOfWeek = date.getDayOfWeek();
+        if (dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY) {
+            return date.with(TemporalAdjusters.next(DayOfWeek.MONDAY));
+        }
+        return date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
     }
 
     /**
-     * Generates daily meal plans for all 5 days
+     * Generates daily meal plans for 5 days with no consecutive-day repetition per category.
      */
     private List<DailyMealPlan> generateDailyMealPlans(
             MenuPlan menuPlan,
-            List<Recipe> feasibleRecipes,
-            MenuPlanRequest request) {
+            List<Recipe> soups,
+            List<Recipe> mainCourses,
+            List<Recipe> sideDishes,
+            LocalDate startDate) {
 
         List<DailyMealPlan> dailyPlans = new ArrayList<>();
-        Set<Long> usedRecipeIdsYesterday = new HashSet<>();
 
-        // Categorize recipes by meal type
-        List<Recipe> breakfastRecipes = filterRecipesByCategory(feasibleRecipes, Recipe.RecipeCategory.BREAKFAST);
-        List<Recipe> lunchRecipes = filterRecipesByCategories(feasibleRecipes,
-            Arrays.asList(Recipe.RecipeCategory.MAIN_COURSE, Recipe.RecipeCategory.SOUP));
-        List<Recipe> dinnerRecipes = filterRecipesByCategory(feasibleRecipes, Recipe.RecipeCategory.MAIN_COURSE);
+        // Shuffle for randomness
+        List<Recipe> shuffledSoups = new ArrayList<>(soups);
+        List<Recipe> shuffledMains = new ArrayList<>(mainCourses);
+        List<Recipe> shuffledSides = new ArrayList<>(sideDishes);
+        Collections.shuffle(shuffledSoups);
+        Collections.shuffle(shuffledMains);
+        Collections.shuffle(shuffledSides);
 
-        if (breakfastRecipes.isEmpty() || lunchRecipes.isEmpty() || dinnerRecipes.isEmpty()) {
-            throw new IllegalStateException(
-                "Insufficient recipes in required categories. Breakfast: " + breakfastRecipes.size() +
-                ", Lunch: " + lunchRecipes.size() +
-                ", Dinner: " + dinnerRecipes.size()
-            );
-        }
+        Recipe previousSoup = null;
+        Recipe previousMain = null;
+        Recipe previousSide = null;
 
         for (int day = 1; day <= PLANNING_DAYS; day++) {
-            LocalDate mealDate = request.getStartDate().plusDays(day - 1);
+            LocalDate mealDate = startDate.plusDays(day - 1);
+
+            Recipe soup = selectRecipeAvoidingPrevious(shuffledSoups, previousSoup);
+            Recipe main = selectRecipeAvoidingPrevious(shuffledMains, previousMain);
+            Recipe side = selectRecipeAvoidingPrevious(shuffledSides, previousSide);
+
+            int totalCalories = soup.getCaloriesPerServing().intValue()
+                + main.getCaloriesPerServing().intValue()
+                + side.getCaloriesPerServing().intValue();
 
             DailyMealPlan dailyPlan = DailyMealPlan.builder()
                 .menuPlan(menuPlan)
                 .dayNumber(day)
                 .mealDate(mealDate)
+                .soupRecipe(soup)
+                .mainCourseRecipe(main)
+                .sideDishRecipe(side)
+                .totalCalories(totalCalories)
                 .build();
-
-            // Select meals ensuring no ingredient repetition from previous day
-            Recipe breakfast = selectRecipe(breakfastRecipes, usedRecipeIdsYesterday, request);
-            Recipe lunch = selectRecipe(lunchRecipes, usedRecipeIdsYesterday, request);
-            Recipe dinner = selectRecipe(dinnerRecipes, usedRecipeIdsYesterday, request);
-
-            dailyPlan.setBreakfastRecipe(breakfast);
-            dailyPlan.setLunchRecipe(lunch);
-            dailyPlan.setDinnerRecipe(dinner);
-
-            // Calculate total calories for the day
-            int totalCalories = calculateDailyCalories(breakfast, lunch, dinner);
-            dailyPlan.setTotalCalories(totalCalories);
-
-            // Validate daily nutrition (protein 20-30g, carbs 50-80g)
-            var dailyNutrition = nutritionCalculatorService.calculateDailyNutrition(
-                java.util.Arrays.asList(breakfast, lunch, dinner)
-            );
-            boolean nutritionValid = nutritionCalculatorService.validateDailyNutrition(dailyNutrition);
-            log.debug("Day {} nutrition validation: {} (Protein: {}g, Carbs: {}g)",
-                day, nutritionValid ? "PASS" : "FAIL",
-                dailyNutrition.getProtein(), dailyNutrition.getCarbohydrates());
 
             dailyPlans.add(dailyPlan);
 
-            // Update used recipes for next iteration
-            usedRecipeIdsYesterday.clear();
-            usedRecipeIdsYesterday.add(breakfast.getId());
-            usedRecipeIdsYesterday.add(lunch.getId());
-            usedRecipeIdsYesterday.add(dinner.getId());
+            previousSoup = soup;
+            previousMain = main;
+            previousSide = side;
 
-            log.debug("Day {}: Breakfast={}, Lunch={}, Dinner={}, Total Calories={}",
-                day, breakfast.getName(), lunch.getName(), dinner.getName(), totalCalories);
+            log.debug("Day {}: Soup={}, Main={}, Side={}, Calories={}",
+                day, soup.getName(), main.getName(), side.getName(), totalCalories);
         }
 
         return dailyPlans;
     }
 
     /**
-     * Selects a recipe that meets calorie requirements and wasn't used yesterday
+     * Selects a recipe from the list, avoiding the previous day's recipe.
+     * Falls back to allowing repetition if only 1 recipe is available.
      */
-    private Recipe selectRecipe(
-            List<Recipe> candidateRecipes,
-            Set<Long> usedRecipeIdsYesterday,
-            MenuPlanRequest request) {
+    private Recipe selectRecipeAvoidingPrevious(List<Recipe> recipes, Recipe previous) {
+        if (previous == null || recipes.size() <= 1) {
+            return recipes.get(0);
+        }
 
-        // Filter recipes not used yesterday
-        List<Recipe> availableRecipes = candidateRecipes.stream()
-            .filter(r -> !usedRecipeIdsYesterday.contains(r.getId()))
+        List<Recipe> candidates = recipes.stream()
+            .filter(r -> !r.getId().equals(previous.getId()))
             .collect(Collectors.toList());
 
-        if (availableRecipes.isEmpty()) {
-            // Fallback: allow repetition if no other option
-            availableRecipes = candidateRecipes;
+        if (candidates.isEmpty()) {
+            return recipes.get(0);
         }
 
-        // Filter by calorie range
-        List<Recipe> calorieFilteredRecipes = availableRecipes.stream()
-            .filter(r -> {
-                BigDecimal caloriesPerServing = r.getCaloriesPerServing();
-                int calories = caloriesPerServing.intValue();
-                return calories >= request.getCaloriesPerMealMin() &&
-                       calories <= request.getCaloriesPerMealMax();
-            })
-            .collect(Collectors.toList());
-
-        if (!calorieFilteredRecipes.isEmpty()) {
-            availableRecipes = calorieFilteredRecipes;
-        }
-
-        // Select recipe with best balance score
-        return availableRecipes.stream()
-            .max(Comparator.comparingDouble(this::calculateRecipeBalanceScore))
-            .orElse(availableRecipes.get(0));
+        Collections.shuffle(candidates);
+        return candidates.get(0);
     }
 
-    /**
-     * Calculates balance score for a single recipe (protein-carb ratio)
-     */
-    private double calculateRecipeBalanceScore(Recipe recipe) {
-        BigDecimal protein = recipe.getProtein();
-        BigDecimal carbs = recipe.getCarbohydrates();
-        BigDecimal calories = recipe.getCalories();
-
-        if (calories.compareTo(BigDecimal.ZERO) == 0) {
-            return 0.0;
-        }
-
-        // Calculate macronutrient ratios
-        // Protein: 4 kcal/g, Carbs: 4 kcal/g
-        double proteinCalories = protein.multiply(new BigDecimal("4")).doubleValue();
-        double carbCalories = carbs.multiply(new BigDecimal("4")).doubleValue();
-        double totalCalories = calories.doubleValue();
-
-        double proteinRatio = proteinCalories / totalCalories;
-        double carbRatio = carbCalories / totalCalories;
-
-        // Score based on how close to ideal ratios
-        double proteinScore = 100.0;
-        if (proteinRatio < PROTEIN_MIN_RATIO) {
-            proteinScore = (proteinRatio / PROTEIN_MIN_RATIO) * 100.0;
-        } else if (proteinRatio > PROTEIN_MAX_RATIO) {
-            proteinScore = (PROTEIN_MAX_RATIO / proteinRatio) * 100.0;
-        }
-
-        double carbScore = 100.0;
-        if (carbRatio < CARB_MIN_RATIO) {
-            carbScore = (carbRatio / CARB_MIN_RATIO) * 100.0;
-        } else if (carbRatio > CARB_MAX_RATIO) {
-            carbScore = (CARB_MAX_RATIO / carbRatio) * 100.0;
-        }
-
-        return (proteinScore + carbScore) / 2.0;
-    }
-
-    /**
-     * Calculates total daily calories from 3 meals
-     */
-    private int calculateDailyCalories(Recipe breakfast, Recipe lunch, Recipe dinner) {
-        return breakfast.getCaloriesPerServing().intValue() +
-               lunch.getCaloriesPerServing().intValue() +
-               dinner.getCaloriesPerServing().intValue();
-    }
-
-    /**
-     * Calculates and sets total/average calories for the menu plan
-     */
     private void calculateNutritionMetrics(MenuPlan menuPlan) {
         int totalCalories = menuPlan.getDailyMealPlans().stream()
             .mapToInt(dmp -> dmp.getTotalCalories() != null ? dmp.getTotalCalories() : 0)
@@ -307,14 +226,6 @@ public class MenuPlannerService {
         menuPlan.setAverageDailyCalories(averageDailyCalories);
     }
 
-    /**
-     * Calculates overall balance score for the menu plan
-     *
-     * Scoring criteria:
-     * 1. Protein-carb balance across all days (40%)
-     * 2. Calorie consistency across days (30%)
-     * 3. Recipe variety (no repetition penalty) (30%)
-     */
     private double calculateBalanceScore(MenuPlan menuPlan) {
         List<DailyMealPlan> dailyPlans = new ArrayList<>(menuPlan.getDailyMealPlans());
 
@@ -322,39 +233,31 @@ public class MenuPlannerService {
             return 0.0;
         }
 
-        // 1. Macro balance score (40%)
+        // Macro balance score (40%)
         double macroScore = calculateMacroBalanceScore(dailyPlans);
 
-        // 2. Calorie consistency score (30%)
+        // Calorie consistency score (30%)
         double calorieScore = calculateCalorieConsistencyScore(dailyPlans);
 
-        // 3. Variety score (30%)
+        // Variety score (30%)
         double varietyScore = calculateVarietyScore(dailyPlans);
 
         double totalScore = (macroScore * 0.4) + (calorieScore * 0.3) + (varietyScore * 0.3);
 
-        log.debug("Balance scores - Macro: {}, Calorie: {}, Variety: {}, Total: {}",
-            macroScore, calorieScore, varietyScore, totalScore);
-
         return Math.round(totalScore * 100.0) / 100.0;
     }
 
-    /**
-     * Calculates macro balance score across all days
-     */
     private double calculateMacroBalanceScore(List<DailyMealPlan> dailyPlans) {
         double totalScore = 0.0;
         int count = 0;
 
         for (DailyMealPlan dailyPlan : dailyPlans) {
-            List<Recipe> recipes = Arrays.asList(
-                dailyPlan.getBreakfastRecipe(),
-                dailyPlan.getLunchRecipe(),
-                dailyPlan.getDinnerRecipe()
-            );
+            List<Recipe> recipes = new ArrayList<>();
+            if (dailyPlan.getSoupRecipe() != null) recipes.add(dailyPlan.getSoupRecipe());
+            if (dailyPlan.getMainCourseRecipe() != null) recipes.add(dailyPlan.getMainCourseRecipe());
+            if (dailyPlan.getSideDishRecipe() != null) recipes.add(dailyPlan.getSideDishRecipe());
 
             double dayScore = recipes.stream()
-                .filter(Objects::nonNull)
                 .mapToDouble(this::calculateRecipeBalanceScore)
                 .average()
                 .orElse(0.0);
@@ -366,71 +269,69 @@ public class MenuPlannerService {
         return count > 0 ? totalScore / count : 0.0;
     }
 
-    /**
-     * Calculates calorie consistency score (lower variance = higher score)
-     */
+    private double calculateRecipeBalanceScore(Recipe recipe) {
+        if (recipe.getCalories().compareTo(java.math.BigDecimal.ZERO) == 0) {
+            return 0.0;
+        }
+
+        double proteinCalories = recipe.getProtein().multiply(new java.math.BigDecimal("4")).doubleValue();
+        double carbCalories = recipe.getCarbohydrates().multiply(new java.math.BigDecimal("4")).doubleValue();
+        double totalCalories = recipe.getCalories().doubleValue();
+
+        double proteinRatio = proteinCalories / totalCalories;
+        double carbRatio = carbCalories / totalCalories;
+
+        double proteinScore = 100.0;
+        if (proteinRatio < 0.20) proteinScore = (proteinRatio / 0.20) * 100.0;
+        else if (proteinRatio > 0.35) proteinScore = (0.35 / proteinRatio) * 100.0;
+
+        double carbScore = 100.0;
+        if (carbRatio < 0.45) carbScore = (carbRatio / 0.45) * 100.0;
+        else if (carbRatio > 0.65) carbScore = (0.65 / carbRatio) * 100.0;
+
+        return (proteinScore + carbScore) / 2.0;
+    }
+
     private double calculateCalorieConsistencyScore(List<DailyMealPlan> dailyPlans) {
         List<Integer> dailyCalories = dailyPlans.stream()
             .map(DailyMealPlan::getTotalCalories)
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
 
-        if (dailyCalories.size() < 2) {
-            return 100.0;
-        }
+        if (dailyCalories.size() < 2) return 100.0;
 
-        double mean = dailyCalories.stream()
-            .mapToInt(Integer::intValue)
-            .average()
-            .orElse(0.0);
-
-        double variance = dailyCalories.stream()
-            .mapToDouble(cal -> Math.pow(cal - mean, 2))
-            .average()
-            .orElse(0.0);
-
+        double mean = dailyCalories.stream().mapToInt(Integer::intValue).average().orElse(0.0);
+        double variance = dailyCalories.stream().mapToDouble(cal -> Math.pow(cal - mean, 2)).average().orElse(0.0);
         double stdDev = Math.sqrt(variance);
-        double coefficientOfVariation = mean > 0 ? (stdDev / mean) * 100.0 : 0.0;
+        double cv = mean > 0 ? (stdDev / mean) * 100.0 : 0.0;
 
-        // Lower CV = higher score (ideal CV < 10%)
-        if (coefficientOfVariation < 10.0) {
-            return 100.0;
-        } else if (coefficientOfVariation < 20.0) {
-            return 90.0;
-        } else if (coefficientOfVariation < 30.0) {
-            return 75.0;
-        } else {
-            return 50.0;
-        }
+        if (cv < 10.0) return 100.0;
+        else if (cv < 20.0) return 90.0;
+        else if (cv < 30.0) return 75.0;
+        else return 50.0;
     }
 
-    /**
-     * Calculates variety score (fewer repetitions = higher score)
-     */
     private double calculateVarietyScore(List<DailyMealPlan> dailyPlans) {
         Set<Long> allRecipeIds = new HashSet<>();
         int totalMeals = 0;
 
         for (DailyMealPlan dailyPlan : dailyPlans) {
-            if (dailyPlan.getBreakfastRecipe() != null) {
-                allRecipeIds.add(dailyPlan.getBreakfastRecipe().getId());
+            if (dailyPlan.getSoupRecipe() != null) {
+                allRecipeIds.add(dailyPlan.getSoupRecipe().getId());
                 totalMeals++;
             }
-            if (dailyPlan.getLunchRecipe() != null) {
-                allRecipeIds.add(dailyPlan.getLunchRecipe().getId());
+            if (dailyPlan.getMainCourseRecipe() != null) {
+                allRecipeIds.add(dailyPlan.getMainCourseRecipe().getId());
                 totalMeals++;
             }
-            if (dailyPlan.getDinnerRecipe() != null) {
-                allRecipeIds.add(dailyPlan.getDinnerRecipe().getId());
+            if (dailyPlan.getSideDishRecipe() != null) {
+                allRecipeIds.add(dailyPlan.getSideDishRecipe().getId());
                 totalMeals++;
             }
         }
 
-        if (totalMeals == 0) {
-            return 0.0;
-        }
+        if (totalMeals == 0) return 0.0;
 
-        // Variety ratio: unique recipes / total meals
         double varietyRatio = (double) allRecipeIds.size() / totalMeals;
         return varietyRatio * 100.0;
     }
@@ -441,9 +342,38 @@ public class MenuPlannerService {
             .collect(Collectors.toList());
     }
 
-    private List<Recipe> filterRecipesByCategories(List<Recipe> recipes, List<Recipe.RecipeCategory> categories) {
-        return recipes.stream()
-            .filter(r -> categories.contains(r.getCategory()))
-            .collect(Collectors.toList());
+    private boolean isRecipeCookable(Recipe recipe, Map<Long, Ingredient> availableById) {
+        if (recipe.getRecipeIngredients() == null || recipe.getRecipeIngredients().isEmpty()) {
+            return false;
+        }
+
+        for (RecipeIngredient ri : recipe.getRecipeIngredients()) {
+            Ingredient ingredient = ri.getIngredient() != null ? availableById.get(ri.getIngredient().getId()) : null;
+
+            if (ingredient == null) {
+                if (Boolean.TRUE.equals(ri.getOptional())) {
+                    continue;
+                }
+                return false;
+            }
+
+            if (ingredient.getUnit() != null && ri.getUnit() != null
+                && !ingredient.getUnit().equals(ri.getUnit())) {
+                if (Boolean.TRUE.equals(ri.getOptional())) {
+                    continue;
+                }
+                return false;
+            }
+
+            if (ingredient.getQuantity() != null && ri.getQuantity() != null
+                && ingredient.getQuantity().compareTo(ri.getQuantity()) < 0) {
+                if (Boolean.TRUE.equals(ri.getOptional())) {
+                    continue;
+                }
+                return false;
+            }
+        }
+
+        return true;
     }
 }

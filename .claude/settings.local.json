@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"C:\\\\Users\\\\EceErdem\\\\apache-maven-3.9.12\\\\bin\\\\mvn.cmd\" clean package -DskipTests -Dmaven.test.skip=true -q)",
+      "Bash(npm run build:*)",
+      "Bash(npx vite build)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(netstat:*)",
+      "Bash(powershell -Command \"Invoke-WebRequest -Uri ''http://localhost:8080/api/ingredients'' -UseBasicParsing | Select-Object -ExpandProperty StatusCode\")",
+      "Bash(findstr:*)",
+      "Bash(powershell -Command \"\\(Invoke-WebRequest -Uri ''http://localhost:8080/api-docs'' -UseBasicParsing\\).StatusCode\")",
+      "Bash(npm run dev:*)",
+      "Bash(powershell -Command \"\\(Invoke-WebRequest -Uri ''http://localhost:8089/api/ingredients'' -UseBasicParsing\\).Content\")",
+      "Bash(dir:*)",
+      "Bash(\"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\pg_isready\" -h localhost -p 5432)",
+      "Bash(\"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\pg_ctl\" start -D \"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\data\")",
+      "Bash(\"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql\" -U postgres -h localhost -l)",
+      "Bash(powershell -Command \"try { $r = Invoke-WebRequest -Uri ''http://localhost:8080/api/ingredients'' -UseBasicParsing; $r.Content } catch { Write-Host ''Status:'' $_Exception.Response.StatusCode; Write-Host $_Exception.Message }\")",
+      "Bash(powershell \"Invoke-WebRequest -Uri ''http://localhost:8080/api/ingredients'' -UseBasicParsing | Select-Object StatusCode, Content\")",
+      "Bash(powershell \"Invoke-WebRequest -Uri ''http://localhost:3002/api/ingredients'' -UseBasicParsing | Select-Object StatusCode\")",
+      "Bash(powershell \"Invoke-WebRequest -Uri ''http://localhost:8080/api/ingredients'' -Method POST -ContentType ''application/json'' -Body ''{\"\"name\"\":\"\"TestYeni123\"\",\"\"category\"\":\"\"VEGETABLES\"\",\"\"quantity\"\":100,\"\"unit\"\":\"\"GRAM\"\",\"\"available\"\":true,\"\"userId\"\":1}'' -UseBasicParsing | Select-Object StatusCode, Content\")",
+      "Bash(taskkill:*)",
+      "Bash(mvn test:*)",
+      "Bash(git stash:*)",
+      "Bash(mvn clean test:*)",
+      "Bash(mvn clean compile:*)",
+      "Bash(cmd /c \"taskkill /PID 7756 /F\")",
+      "Bash(powershell:*)",
+      "Bash(npm start)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

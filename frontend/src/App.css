@@ -17,10 +17,86 @@ body {
 
 .App {
   min-height: 100vh;
-  padding: 2rem 0;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Header */
+.app-header {
+  text-align: center;
+  padding: 2rem 1rem 1rem;
+}
+
+.app-header h1 {
+  font-size: 2rem;
+  color: white;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.app-subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1rem;
+  margin-top: 0.4rem;
+}
+
+/* Tabs */
+.app-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.25rem 1rem 0;
+}
+
+.app-tab {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.85);
+  border: none;
+  padding: 0.65rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.app-tab:hover {
+  background: rgba(255, 255, 255, 0.35);
+  color: white;
+}
+
+.app-tab-active {
+  background: white;
+  color: #2c3e50;
+}
+
+.app-tab-active:hover {
+  background: white;
+  color: #2c3e50;
+}
+
+/* Content */
+.app-content {
+  background: rgba(255, 255, 255, 0.05);
+  min-height: 60vh;
+  padding-bottom: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .app-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .app-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .app-tab {
+    padding: 0.55rem 1.25rem;
+    font-size: 0.9rem;
+  }
 }

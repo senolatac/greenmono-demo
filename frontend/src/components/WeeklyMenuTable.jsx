@@ -2,35 +2,13 @@ import React, { useState, useEffect } from 'react';
 import menuService from '../services/menuService';
 import './WeeklyMenuTable.css';
 
+const DAY_ORDER = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
+
 const WeeklyMenuTable = () => {
   const [menuData, setMenuData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const userId = 1; // Default user ID for demo purposes
-
-  // Group menu items by day
-  const groupByDay = (items) => {
-    const grouped = {};
-    items.forEach(item => {
-      if (!grouped[item.day]) {
-        grouped[item.day] = {
-          day: item.day,
-          date: item.date,
-          meals: []
-        };
-      }
-      grouped[item.day].meals.push(item.meal);
-    });
-    return Object.values(grouped);
-  };
-
-  // Order days from Monday to Friday
-  const orderDays = (groupedData) => {
-    const dayOrder = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
-    return groupedData.sort((a, b) => {
-      return dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day);
-    });
-  };
 
   // Fetch current menu on component mount
   useEffect(() => {
@@ -71,8 +49,10 @@ const WeeklyMenuTable = () => {
     }
   };
 
-  // Prepare data for table display
-  const groupedData = menuData.length > 0 ? orderDays(groupByDay(menuData)) : [];
+  // Sort menu items by day order (Mon-Fri)
+  const sortedData = [...menuData].sort((a, b) => {
+    return DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day);
+  });
 
   return (
     <div className="weekly-menu-container">
@@ -95,7 +75,7 @@ const WeeklyMenuTable = () => {
 
       {loading && menuData.length === 0 ? (
         <div className="loading">Yükleniyor...</div>
-      ) : groupedData.length === 0 && !error ? (
+      ) : sortedData.length === 0 && !error ? (
         <div className="empty-state">
           <p>Henüz bir menü planınız yok.</p>
           <p>Yeni bir menü oluşturmak için yukarıdaki butona tıklayın.</p>
@@ -105,11 +85,12 @@ const WeeklyMenuTable = () => {
           <table className="menu-table">
             <thead>
               <tr>
-                {groupedData.map((dayData) => (
-                  <th key={dayData.day}>
+                <th className="row-header-cell"></th>
+                {sortedData.map((item) => (
+                  <th key={item.day}>
                     <div className="day-header">
-                      <div className="day-name">{dayData.day}</div>
-                      <div className="day-date">{dayData.date}</div>
+                      <div className="day-name">{item.day}</div>
+                      <div className="day-date">{item.date}</div>
                     </div>
                   </th>
                 ))}
@@ -117,14 +98,31 @@ const WeeklyMenuTable = () => {
             </thead>
             <tbody>
               <tr>
-                {groupedData.map((dayData) => (
-                  <td key={dayData.day}>
-                    <div className="meal-list">
-                      {dayData.meals.map((meal, index) => (
-                        <div key={index} className="meal-item">
-                          {meal}
-                        </div>
-                      ))}
+                <td className="row-header">Çorba</td>
+                {sortedData.map((item) => (
+                  <td key={`soup-${item.day}`}>
+                    <div className="meal-item soup-item">
+                      {item.soup || '-'}
+                    </div>
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <td className="row-header">Ana Yemek</td>
+                {sortedData.map((item) => (
+                  <td key={`main-${item.day}`}>
+                    <div className="meal-item main-item">
+                      {item.mainCourse || '-'}
+                    </div>
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <td className="row-header">Yan Yemek</td>
+                {sortedData.map((item) => (
+                  <td key={`side-${item.day}`}>
+                    <div className="meal-item side-item">
+                      {item.sideDish || '-'}
                     </div>
                   </td>
                 ))}

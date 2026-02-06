@@ -27,8 +27,11 @@ const menuService = {
    */
   generateMenu: async (userId) => {
     try {
+      const today = new Date().toISOString().split('T')[0];
       const response = await axios.post(`${API_BASE_URL}/generate`, {
-        userId: userId
+        userId: userId,
+        startDate: today,
+        targetDailyCalories: 2000
       });
       return response.data;
     } catch (error) {

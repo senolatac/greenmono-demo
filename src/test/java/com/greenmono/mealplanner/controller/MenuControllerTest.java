@@ -59,52 +59,52 @@ class MenuControllerTest {
     void setUp() {
         validRequest = MenuPlanRequest.builder()
                 .userId(1L)
-                .startDate(LocalDate.of(2026, 1, 26))
+                .startDate(LocalDate.of(2026, 2, 2)) // Monday
                 .targetDailyCalories(2000)
                 .caloriesPerMealMin(500)
                 .caloriesPerMealMax(700)
                 .build();
 
         // Create test recipes
-        RecipeResponse breakfastRecipe = RecipeResponse.builder()
+        RecipeResponse soupRecipe = RecipeResponse.builder()
                 .id(1L)
-                .name("Menemen")
-                .category(Recipe.RecipeCategory.BREAKFAST)
-                .calories(BigDecimal.valueOf(450))
+                .name("Mercimek \u00c7orbas\u0131")
+                .category(Recipe.RecipeCategory.SOUP)
+                .calories(BigDecimal.valueOf(180))
                 .build();
 
-        RecipeResponse lunchRecipe = RecipeResponse.builder()
+        RecipeResponse mainCourseRecipe = RecipeResponse.builder()
                 .id(2L)
-                .name("Mantı")
+                .name("Mant\u0131")
                 .category(Recipe.RecipeCategory.MAIN_COURSE)
-                .calories(BigDecimal.valueOf(650))
+                .calories(BigDecimal.valueOf(520))
                 .build();
 
-        RecipeResponse dinnerRecipe = RecipeResponse.builder()
+        RecipeResponse sideDishRecipe = RecipeResponse.builder()
                 .id(3L)
-                .name("Izgara Tavuk")
-                .category(Recipe.RecipeCategory.MAIN_COURSE)
-                .calories(BigDecimal.valueOf(550))
+                .name("Pilav")
+                .category(Recipe.RecipeCategory.SIDE_DISH)
+                .calories(BigDecimal.valueOf(250))
                 .build();
 
-        // Create daily meal plans for 5 days
+        // Create daily meal plans for 5 days (Mon-Fri)
         List<DailyMealPlanResponse> dailyMealPlans = Arrays.asList(
-                createDailyMealPlan(1, LocalDate.of(2026, 1, 26), breakfastRecipe, lunchRecipe, dinnerRecipe),
-                createDailyMealPlan(2, LocalDate.of(2026, 1, 27), breakfastRecipe, lunchRecipe, dinnerRecipe),
-                createDailyMealPlan(3, LocalDate.of(2026, 1, 28), breakfastRecipe, lunchRecipe, dinnerRecipe),
-                createDailyMealPlan(4, LocalDate.of(2026, 1, 29), breakfastRecipe, lunchRecipe, dinnerRecipe),
-                createDailyMealPlan(5, LocalDate.of(2026, 1, 30), breakfastRecipe, lunchRecipe, dinnerRecipe)
+                createDailyMealPlan(1, LocalDate.of(2026, 2, 2), soupRecipe, mainCourseRecipe, sideDishRecipe),
+                createDailyMealPlan(2, LocalDate.of(2026, 2, 3), soupRecipe, mainCourseRecipe, sideDishRecipe),
+                createDailyMealPlan(3, LocalDate.of(2026, 2, 4), soupRecipe, mainCourseRecipe, sideDishRecipe),
+                createDailyMealPlan(4, LocalDate.of(2026, 2, 5), soupRecipe, mainCourseRecipe, sideDishRecipe),
+                createDailyMealPlan(5, LocalDate.of(2026, 2, 6), soupRecipe, mainCourseRecipe, sideDishRecipe)
         );
 
         menuPlanResponse = MenuPlanResponse.builder()
                 .id(1L)
                 .userId(1L)
-                .startDate(LocalDate.of(2026, 1, 26))
-                .endDate(LocalDate.of(2026, 1, 30))
+                .startDate(LocalDate.of(2026, 2, 2))
+                .endDate(LocalDate.of(2026, 2, 6))
                 .dailyMealPlans(dailyMealPlans)
                 .status(MenuPlan.MenuPlanStatus.ACTIVE)
-                .totalCalories(8250)
-                .averageDailyCalories(1650)
+                .totalCalories(4750)
+                .averageDailyCalories(950)
                 .isBalanced(true)
                 .balanceScore(85.0)
                 .createdAt(LocalDateTime.now())
@@ -113,17 +113,17 @@ class MenuControllerTest {
     }
 
     private DailyMealPlanResponse createDailyMealPlan(int dayNumber, LocalDate mealDate,
-                                                      RecipeResponse breakfast,
-                                                      RecipeResponse lunch,
-                                                      RecipeResponse dinner) {
+                                                      RecipeResponse soup,
+                                                      RecipeResponse mainCourse,
+                                                      RecipeResponse sideDish) {
         return DailyMealPlanResponse.builder()
                 .id((long) dayNumber)
                 .dayNumber(dayNumber)
                 .mealDate(mealDate)
-                .breakfastRecipe(breakfast)
-                .lunchRecipe(lunch)
-                .dinnerRecipe(dinner)
-                .totalCalories(1650)
+                .soupRecipe(soup)
+                .mainCourseRecipe(mainCourse)
+                .sideDishRecipe(sideDish)
+                .totalCalories(950)
                 .build();
     }
 
@@ -141,16 +141,12 @@ class MenuControllerTest {
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(15))) // 5 days × 3 meals = 15 items
-                .andExpect(jsonPath("$[0].day", is("Pazar")))
-                .andExpect(jsonPath("$[0].date", is("26.01.2026")))
-                .andExpect(jsonPath("$[0].meal", is("Menemen")))
-                .andExpect(jsonPath("$[1].day", is("Pazar")))
-                .andExpect(jsonPath("$[1].date", is("26.01.2026")))
-                .andExpect(jsonPath("$[1].meal", is("Mantı")))
-                .andExpect(jsonPath("$[2].day", is("Pazar")))
-                .andExpect(jsonPath("$[2].date", is("26.01.2026")))
-                .andExpect(jsonPath("$[2].meal", is("Izgara Tavuk")));
+                .andExpect(jsonPath("$", hasSize(5))) // 5 days, 1 item per day
+                .andExpect(jsonPath("$[0].day", is("Pazartesi")))
+                .andExpect(jsonPath("$[0].date", is("02.02.2026")))
+                .andExpect(jsonPath("$[0].soup", is("Mercimek \u00c7orbas\u0131")))
+                .andExpect(jsonPath("$[0].mainCourse", is("Mant\u0131")))
+                .andExpect(jsonPath("$[0].sideDish", is("Pilav")));
     }
 
     @Test
@@ -214,8 +210,8 @@ class MenuControllerTest {
         MenuPlanResponse emptyMenuPlan = MenuPlanResponse.builder()
                 .id(1L)
                 .userId(1L)
-                .startDate(LocalDate.of(2026, 1, 26))
-                .endDate(LocalDate.of(2026, 1, 30))
+                .startDate(LocalDate.of(2026, 2, 2))
+                .endDate(LocalDate.of(2026, 2, 6))
                 .dailyMealPlans(Arrays.asList())
                 .status(MenuPlan.MenuPlanStatus.ACTIVE)
                 .build();
@@ -247,13 +243,12 @@ class MenuControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(15))) // 5 days × 3 meals = 15 items
-                .andExpect(jsonPath("$[0].day", is("Pazar")))
-                .andExpect(jsonPath("$[0].date", is("26.01.2026")))
-                .andExpect(jsonPath("$[0].meal", is("Menemen")))
-                .andExpect(jsonPath("$[3].day", is("Pazartesi")))
-                .andExpect(jsonPath("$[3].date", is("27.01.2026")))
-                .andExpect(jsonPath("$[3].meal", is("Menemen")));
+                .andExpect(jsonPath("$", hasSize(5))) // 5 days, 1 item per day
+                .andExpect(jsonPath("$[0].day", is("Pazartesi")))
+                .andExpect(jsonPath("$[0].date", is("02.02.2026")))
+                .andExpect(jsonPath("$[0].soup", is("Mercimek \u00c7orbas\u0131")))
+                .andExpect(jsonPath("$[0].mainCourse", is("Mant\u0131")))
+                .andExpect(jsonPath("$[0].sideDish", is("Pilav")));
     }
 
     @Test
@@ -285,22 +280,22 @@ class MenuControllerTest {
     }
 
     @Test
-    @DisplayName("Should format Turkish day names correctly")
+    @DisplayName("Should format Turkish day names correctly for Mon-Fri")
     void shouldFormatTurkishDayNamesCorrectly() throws Exception {
         // Arrange
-        // Create menu plan with all days of the week
-        RecipeResponse recipe = RecipeResponse.builder()
-                .id(1L)
-                .name("Test Yemek")
-                .calories(BigDecimal.valueOf(500))
-                .build();
+        RecipeResponse soup = RecipeResponse.builder()
+                .id(1L).name("Test \u00c7orba").calories(BigDecimal.valueOf(180)).build();
+        RecipeResponse main = RecipeResponse.builder()
+                .id(2L).name("Test Yemek").calories(BigDecimal.valueOf(500)).build();
+        RecipeResponse side = RecipeResponse.builder()
+                .id(3L).name("Test Pilav").calories(BigDecimal.valueOf(250)).build();
 
         List<DailyMealPlanResponse> weeklyPlans = Arrays.asList(
-                createDailyMealPlan(1, LocalDate.of(2026, 2, 2), recipe, recipe, recipe),  // Pazartesi
-                createDailyMealPlan(2, LocalDate.of(2026, 2, 3), recipe, recipe, recipe),  // Salı
-                createDailyMealPlan(3, LocalDate.of(2026, 2, 4), recipe, recipe, recipe),  // Çarşamba
-                createDailyMealPlan(4, LocalDate.of(2026, 2, 5), recipe, recipe, recipe),  // Perşembe
-                createDailyMealPlan(5, LocalDate.of(2026, 2, 6), recipe, recipe, recipe)   // Cuma
+                createDailyMealPlan(1, LocalDate.of(2026, 2, 2), soup, main, side),  // Pazartesi
+                createDailyMealPlan(2, LocalDate.of(2026, 2, 3), soup, main, side),  // Sal\u0131
+                createDailyMealPlan(3, LocalDate.of(2026, 2, 4), soup, main, side),  // \u00c7ar\u015famba
+                createDailyMealPlan(4, LocalDate.of(2026, 2, 5), soup, main, side),  // Per\u015fembe
+                createDailyMealPlan(5, LocalDate.of(2026, 2, 6), soup, main, side)   // Cuma
         );
 
         MenuPlanResponse weeklyMenuPlan = MenuPlanResponse.builder()
@@ -321,32 +316,32 @@ class MenuControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(5)))
                 .andExpect(jsonPath("$[0].day", is("Pazartesi")))
                 .andExpect(jsonPath("$[0].date", is("02.02.2026")))
-                .andExpect(jsonPath("$[3].day", is("Salı")))
-                .andExpect(jsonPath("$[3].date", is("03.02.2026")))
-                .andExpect(jsonPath("$[6].day", is("Çarşamba")))
-                .andExpect(jsonPath("$[6].date", is("04.02.2026")))
-                .andExpect(jsonPath("$[9].day", is("Perşembe")))
-                .andExpect(jsonPath("$[9].date", is("05.02.2026")))
-                .andExpect(jsonPath("$[12].day", is("Cuma")))
-                .andExpect(jsonPath("$[12].date", is("06.02.2026")));
+                .andExpect(jsonPath("$[0].soup", is("Test \u00c7orba")))
+                .andExpect(jsonPath("$[0].mainCourse", is("Test Yemek")))
+                .andExpect(jsonPath("$[0].sideDish", is("Test Pilav")))
+                .andExpect(jsonPath("$[1].day", is("Sal\u0131")))
+                .andExpect(jsonPath("$[2].day", is("\u00c7ar\u015famba")))
+                .andExpect(jsonPath("$[3].day", is("Per\u015fembe")))
+                .andExpect(jsonPath("$[4].day", is("Cuma")));
     }
 
     @Test
-    @DisplayName("Should handle meals with null recipes gracefully")
-    void shouldHandleMealsWithNullRecipesGracefully() throws Exception {
+    @DisplayName("Should handle daily plans with null recipes gracefully")
+    void shouldHandleDailyPlansWithNullRecipesGracefully() throws Exception {
         // Arrange
-        DailyMealPlanResponse dailyPlanWithNullRecipes = DailyMealPlanResponse.builder()
+        DailyMealPlanResponse dailyPlanWithNulls = DailyMealPlanResponse.builder()
                 .id(1L)
                 .dayNumber(1)
-                .mealDate(LocalDate.of(2026, 1, 26))
-                .breakfastRecipe(null) // Null breakfast
-                .lunchRecipe(RecipeResponse.builder()
+                .mealDate(LocalDate.of(2026, 2, 2))
+                .soupRecipe(null)
+                .mainCourseRecipe(RecipeResponse.builder()
                         .id(2L)
-                        .name("Öğle Yemeği")
+                        .name("Ana Yemek")
                         .build())
-                .dinnerRecipe(null) // Null dinner
+                .sideDishRecipe(null)
                 .build();
 
         MenuPlanResponse menuPlanWithNulls = MenuPlanResponse.builder()
@@ -365,7 +360,9 @@ class MenuControllerTest {
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(1))) // Only lunch is present
-                .andExpect(jsonPath("$[0].meal", is("Öğle Yemeği")));
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].soup").doesNotExist())
+                .andExpect(jsonPath("$[0].mainCourse", is("Ana Yemek")))
+                .andExpect(jsonPath("$[0].sideDish").doesNotExist());
     }
 }

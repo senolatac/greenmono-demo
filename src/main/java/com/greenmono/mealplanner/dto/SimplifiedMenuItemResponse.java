@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Simplified menu item response with day, date, and meal name")
+@Schema(description = "Simplified menu item response with day, date, and 3-component meal")
 public class SimplifiedMenuItemResponse {
 
     @Schema(description = "Day of the week in Turkish", example = "Pazartesi")
@@ -19,6 +19,12 @@ public class SimplifiedMenuItemResponse {
     @Schema(description = "Date in dd.MM.yyyy format", example = "26.01.2026")
     private String date;
 
-    @Schema(description = "Meal name", example = "Mantı")
-    private String meal;
+    @Schema(description = "Soup name", example = "Mercimek \u00c7orbas\u0131")
+    private String soup;
+
+    @Schema(description = "Main course name", example = "Mant\u0131")
+    private String mainCourse;
+
+    @Schema(description = "Side dish name", example = "Pilav")
+    private String sideDish;
 }

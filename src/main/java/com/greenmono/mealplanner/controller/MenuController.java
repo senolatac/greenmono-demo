@@ -104,10 +104,10 @@ public class MenuController {
 
     /**
      * Converts a full MenuPlanResponse to a simplified list format.
-     * Each meal (breakfast, lunch, dinner) for each day becomes a separate item.
+     * Each day becomes a single item with soup, mainCourse, and sideDish fields.
      *
      * @param menuPlanResponse The full menu plan response
-     * @return List of simplified menu items with day, date, and meal name
+     * @return List of simplified menu items with day, date, soup, mainCourse, sideDish
      */
     private List<SimplifiedMenuItemResponse> convertToSimplifiedFormat(MenuPlanResponse menuPlanResponse) {
         List<SimplifiedMenuItemResponse> simplifiedMenu = new ArrayList<>();
@@ -126,32 +126,13 @@ public class MenuController {
             // Format date as dd.MM.yyyy
             String formattedDate = mealDate.format(DATE_FORMATTER);
 
-            // Add breakfast
-            if (dailyPlan.getBreakfastRecipe() != null) {
-                simplifiedMenu.add(SimplifiedMenuItemResponse.builder()
-                    .day(dayName)
-                    .date(formattedDate)
-                    .meal(dailyPlan.getBreakfastRecipe().getName())
-                    .build());
-            }
-
-            // Add lunch
-            if (dailyPlan.getLunchRecipe() != null) {
-                simplifiedMenu.add(SimplifiedMenuItemResponse.builder()
-                    .day(dayName)
-                    .date(formattedDate)
-                    .meal(dailyPlan.getLunchRecipe().getName())
-                    .build());
-            }
-
-            // Add dinner
-            if (dailyPlan.getDinnerRecipe() != null) {
-                simplifiedMenu.add(SimplifiedMenuItemResponse.builder()
-                    .day(dayName)
-                    .date(formattedDate)
-                    .meal(dailyPlan.getDinnerRecipe().getName())
-                    .build());
-            }
+            simplifiedMenu.add(SimplifiedMenuItemResponse.builder()
+                .day(dayName)
+                .date(formattedDate)
+                .soup(dailyPlan.getSoupRecipe() != null ? dailyPlan.getSoupRecipe().getName() : null)
+                .mainCourse(dailyPlan.getMainCourseRecipe() != null ? dailyPlan.getMainCourseRecipe().getName() : null)
+                .sideDish(dailyPlan.getSideDishRecipe() != null ? dailyPlan.getSideDishRecipe().getName() : null)
+                .build());
         }
 
         return simplifiedMenu;

@@ -2,10 +2,8 @@ package com.greenmono.mealplanner.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -31,6 +29,8 @@ public class DailyMealPlan {
     @NotNull(message = "Menu plan is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "menu_plan_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private MenuPlan menuPlan;
 
     @NotNull(message = "Day number is required")
@@ -59,15 +59,15 @@ public class DailyMealPlan {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "breakfast_recipe_id")
-    private Recipe breakfastRecipe;
+    private Recipe soupRecipe;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lunch_recipe_id")
-    private Recipe lunchRecipe;
+    private Recipe mainCourseRecipe;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dinner_recipe_id")
-    private Recipe dinnerRecipe;
+    private Recipe sideDishRecipe;
 
     @Column(name = "total_calories")
     private Integer totalCalories;

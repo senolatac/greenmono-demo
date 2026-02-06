@@ -37,14 +37,14 @@ public interface MenuPlanMapper {
             .id(dailyMealPlan.getId())
             .dayNumber(dailyMealPlan.getDayNumber())
             .mealDate(dailyMealPlan.getMealDate())
-            .breakfastRecipe(dailyMealPlan.getBreakfastRecipe() != null
-                ? mapRecipeToResponse(dailyMealPlan.getBreakfastRecipe())
+            .soupRecipe(dailyMealPlan.getSoupRecipe() != null
+                ? mapRecipeToResponse(dailyMealPlan.getSoupRecipe())
                 : null)
-            .lunchRecipe(dailyMealPlan.getLunchRecipe() != null
-                ? mapRecipeToResponse(dailyMealPlan.getLunchRecipe())
+            .mainCourseRecipe(dailyMealPlan.getMainCourseRecipe() != null
+                ? mapRecipeToResponse(dailyMealPlan.getMainCourseRecipe())
                 : null)
-            .dinnerRecipe(dailyMealPlan.getDinnerRecipe() != null
-                ? mapRecipeToResponse(dailyMealPlan.getDinnerRecipe())
+            .sideDishRecipe(dailyMealPlan.getSideDishRecipe() != null
+                ? mapRecipeToResponse(dailyMealPlan.getSideDishRecipe())
                 : null)
             .totalCalories(dailyMealPlan.getTotalCalories())
             .notes(dailyMealPlan.getNotes())

@@ -31,6 +31,9 @@ public interface IngredientRepository extends JpaRepository<Ingredient, Long> {
     @Query("SELECT i FROM Ingredient i WHERE i.userId = :userId AND i.available = true AND (i.expiryDate IS NULL OR i.expiryDate >= :currentDate)")
     List<Ingredient> findAvailableIngredientsForUser(@Param("userId") Long userId, @Param("currentDate") LocalDate currentDate);
 
+    @Query("SELECT i FROM Ingredient i WHERE (i.userId = :userId OR i.userId IS NULL) AND i.available = true AND (i.expiryDate IS NULL OR i.expiryDate >= :currentDate)")
+    List<Ingredient> findAvailableIngredientsForUserOrGlobal(@Param("userId") Long userId, @Param("currentDate") LocalDate currentDate);
+
     @Query("SELECT i FROM Ingredient i WHERE i.name LIKE %:searchTerm% OR i.notes LIKE %:searchTerm%")
     List<Ingredient> searchIngredients(@Param("searchTerm") String searchTerm);
 
