@@ -4,6 +4,7 @@ An intelligent meal planning system that creates balanced 5-day menus based on a
 
 ## Features
 
+### Backend Features
 - Ingredient management with expiry tracking and categorization
 - Comprehensive meal recipe database with nutritional information
 - Nutritional information tracking (macros: protein, carbs, fat)
@@ -14,7 +15,22 @@ An intelligent meal planning system that creates balanced 5-day menus based on a
   - Variety scoring across the week
 - Multi-user support with user-specific ingredients and recipes
 - RESTful API with comprehensive Swagger documentation
-- Frontend interface for easy ingredient and menu management
+- CORS configuration for frontend integration
+
+### Frontend Features
+- Modern React 18 application with Vite build tool
+- **Dark Mode** - Toggle between light and dark themes with persistent preference
+- Interactive weekly menu table (5-day view: Monday to Friday)
+- Real-time menu generation with loading states
+- Ingredient management interface with:
+  - Add new ingredients with category selection
+  - Track expiry dates
+  - View ingredient inventory
+  - Delete ingredients
+- Responsive design for mobile, tablet, and desktop
+- Smooth animations and transitions
+- Professional gradient design with theme support
+- Error handling with user-friendly Turkish messages
 
 ## Quick Start
 
@@ -71,16 +87,32 @@ npm run dev
 
 The frontend will be available at http://localhost:3000
 
+Features available in the frontend:
+- View weekly menu plan (5-day table view)
+- Generate new menu with one click
+- Add and manage ingredients
+- Toggle dark mode (theme persists across sessions)
+
 ## Documentation
 
+### Backend Documentation
 - [Project Setup Guide](PROJECT_SETUP.md) - Detailed setup and configuration instructions
 - [Database Schema](DATABASE_SCHEMA.md) - Complete database schema documentation
 - [API Examples](API_EXAMPLES.md) - Comprehensive API usage examples with cURL commands
 - [API Documentation](#api-documentation) - API endpoints and examples (see below)
+- [Implementation Summary](IMPLEMENTATION_SUMMARY.md) - Complete project implementation details
+
+### Frontend Documentation
+- [Frontend README](frontend/README.md) - Frontend-specific setup and usage guide
+- [Dark Mode Feature](frontend/DARK_MODE_FEATURE.md) - Dark mode implementation details
+- [Dark Mode Testing](frontend/DARK_MODE_TESTING.md) - Testing guide for dark mode
+- [Dark Mode Implementation Summary](DARK_MODE_IMPLEMENTATION_SUMMARY.md) - Dark mode feature overview
 
 ## Technology Stack
 
-- **Backend**: Java 17, Spring Boot 3.2.1
+### Backend
+- **Language**: Java 17
+- **Framework**: Spring Boot 3.2.1
 - **Database**: PostgreSQL (production), H2 (testing)
 - **ORM**: Spring Data JPA, Hibernate
 - **Migration**: Flyway
@@ -88,13 +120,15 @@ The frontend will be available at http://localhost:3000
 - **API Documentation**: Springdoc OpenAPI 3.x (Swagger)
 - **Testing**: JUnit 5, Mockito, AssertJ
 - **Build Tool**: Maven 3.x
-- **Frontend**: Vanilla JavaScript, HTML5, CSS3
 
 ### Frontend
-- React 18
-- Vite
-- Axios
-- CSS3 with modern design
+- **Framework**: React 18.2.0
+- **Build Tool**: Vite 5.0.8
+- **HTTP Client**: Axios 1.6.5
+- **Styling**: CSS3 with custom properties (CSS variables)
+- **Features**: Dark mode, responsive design, smooth animations
+- **State Management**: React Context API (for theme)
+- **Code Quality**: ESLint with React plugin
 
 ## Project Structure
 
@@ -131,16 +165,27 @@ weekly-meal-planner/
 │   ├── src/
 │   │   ├── components/              # React components
 │   │   │   ├── WeeklyMenuTable.jsx  # Weekly menu table component
-│   │   │   └── WeeklyMenuTable.css  # Component styles
+│   │   │   ├── WeeklyMenuTable.css  # Component styles
+│   │   │   ├── ThemeToggle.jsx      # Dark mode toggle button
+│   │   │   ├── ThemeToggle.css      # Toggle button styles
+│   │   │   ├── IngredientManager.jsx # Ingredient management component
+│   │   │   ├── IngredientManager.css # Ingredient manager styles
+│   │   │   ├── IngredientForm.jsx   # Add ingredient form
+│   │   │   └── IngredientList.jsx   # Ingredient list display
+│   │   ├── context/                 # React Context
+│   │   │   └── ThemeContext.jsx     # Theme state management
 │   │   ├── services/                # API services
-│   │   │   └── menuService.js       # Menu API client
+│   │   │   ├── menuService.js       # Menu API client
+│   │   │   └── ingredientService.js # Ingredient API client
 │   │   ├── App.jsx                  # Root component
-│   │   ├── App.css                  # Global styles
+│   │   ├── App.css                  # Global styles with dark mode
 │   │   └── main.jsx                 # Application entry point
 │   ├── index.html                   # HTML template
 │   ├── vite.config.js               # Vite configuration
 │   ├── package.json                 # Node.js dependencies
-│   └── README.md                    # Frontend documentation
+│   ├── README.md                    # Frontend documentation
+│   ├── DARK_MODE_FEATURE.md         # Dark mode documentation
+│   └── DARK_MODE_TESTING.md         # Dark mode testing guide
 ├── pom.xml                          # Maven project configuration
 ├── PROJECT_SETUP.md                 # Detailed setup instructions
 ├── DATABASE_SCHEMA.md               # Database schema documentation
@@ -159,9 +204,12 @@ weekly-meal-planner/
 
 #### Frontend
 - **WeeklyMenuTable Component**: Main UI component displaying 5-day menu in table format
-- **API Service**: Axios-based service for backend communication
-- **Responsive Design**: Mobile-first CSS with modern styling
-- **State Management**: React hooks for local state and API data
+- **IngredientManager Component**: Complete ingredient management with add/view/delete functionality
+- **ThemeToggle Component**: Dark mode toggle with persistent theme preference
+- **ThemeContext**: React Context API for global theme state management
+- **API Services**: Axios-based services for menu and ingredient operations
+- **Responsive Design**: Mobile-first CSS with modern styling and dark mode support
+- **State Management**: React hooks and Context API for local and global state
 
 ## API Documentation
 
@@ -521,6 +569,7 @@ weekly-meal-planner/
 
 ### Completed Features
 
+#### Backend
 ✅ Complete database schema with 7 core tables
 ✅ JPA entity classes with proper relationships
 ✅ Repository layer with custom query methods
@@ -531,22 +580,55 @@ weekly-meal-planner/
 ✅ Flyway database migrations
 ✅ Swagger/OpenAPI documentation
 ✅ Comprehensive unit test suite (14+ test cases)
-✅ Frontend interface for ingredient and menu management
 ✅ Multi-user support
-✅ CORS configuration
+✅ CORS configuration for frontend integration
+
+#### Frontend
+✅ React 18 application with Vite build tool
+✅ **Dark mode** with persistent theme preference (localStorage)
+✅ Weekly menu table component (5-day view)
+✅ Ingredient management interface (add, view, delete)
+✅ Real-time menu generation
+✅ Responsive design (mobile, tablet, desktop)
+✅ Loading states and error handling
+✅ Smooth animations and transitions
+✅ Turkish language support
+✅ Professional UI/UX with gradient design
+✅ Context API for theme state management
+✅ Comprehensive documentation
 
 ### Future Enhancements
 
+#### Backend Enhancements
 - User authentication and authorization (Spring Security + JWT)
 - Recipe recommendation system based on preferences
 - Meal history tracking and analytics
-- Grocery list generation from menu plans
 - Nutritional goal tracking and progress reports
 - Recipe rating and review system
-- Social features (share recipes, menu plans)
-- Mobile application (React Native/Flutter)
 - Email notifications for meal reminders
 - Integration with fitness tracking apps
+- API rate limiting and caching
+
+#### Frontend Enhancements
+- User authentication UI (login, register, profile)
+- Recipe detail modal with nutritional information
+- Grocery list generation from menu plans
+- Print menu functionality
+- Export to PDF/Calendar
+- Drag-and-drop meal reordering
+- Custom date range selection for menu plans
+- Meal notes and comments
+- Shopping list feature
+- System preference detection for auto dark mode
+- Multiple theme variants (blue, green, purple)
+- Progressive Web App (PWA) support
+- Offline support with service workers
+
+#### Mobile Development
+- Mobile application (React Native/Flutter)
+- Push notifications for meal reminders
+- Barcode scanning for ingredients
+- Photo upload for meals
 
 ## Troubleshooting
 
@@ -564,7 +646,13 @@ weekly-meal-planner/
 **Issue**: Menu generation fails with "No feasible recipes"
 **Solution**: Ensure you have recipes that use available ingredients and cover all meal categories (breakfast, lunch, dinner)
 
-For more detailed troubleshooting, see [PROJECT_SETUP.md](PROJECT_SETUP.md).
+**Issue**: Dark mode not working or not persisting
+**Solution**: Check browser localStorage is enabled. Theme preference is stored in localStorage under the key 'theme'
+
+**Issue**: Frontend not connecting to backend
+**Solution**: Ensure backend is running on port 8080 and check CORS configuration in WebConfig.java
+
+For more detailed troubleshooting, see [PROJECT_SETUP.md](PROJECT_SETUP.md) and [frontend/README.md](frontend/README.md).
 
 ## Contributing
 
@@ -578,11 +666,20 @@ Contributions are welcome! Please follow these guidelines:
 
 ### Code Style
 
+#### Backend
 - Follow standard Java conventions
 - Use Lombok annotations to reduce boilerplate
 - Write comprehensive unit tests for new features
 - Add Swagger documentation for new endpoints
-- Update README if adding new major features
+- Document all public APIs with Javadoc
+
+#### Frontend
+- Use functional components with React hooks
+- Follow React best practices
+- Use meaningful variable and component names
+- Add comments for complex logic
+- Test thoroughly before committing
+- Update documentation for new features
 
 ## License
 
