@@ -12,21 +12,30 @@
   margin-bottom: 1.5rem;
   border-radius: 4px;
   color: #c0392b;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .ingredient-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-left-color: #ef4444;
+  color: #fca5a5;
 }
 
 /* Form */
 .ingredient-form {
-  background: white;
+  background: var(--bg-white);
   border-radius: 12px;
   padding: 1.5rem 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--shadow-sm);
+  transition: all 0.3s ease;
 }
 
 .ingredient-form h2 {
   margin: 0 0 1.25rem;
   font-size: 1.3rem;
-  color: #2c3e50;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .ingredient-form-grid {
@@ -44,16 +53,19 @@
 .ingredient-form-group label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #555;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 .ingredient-form-group input,
 .ingredient-form-group select {
   padding: 0.55rem 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 0.95rem;
-  transition: border-color 0.2s;
+  background-color: var(--bg-white);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 .ingredient-form-group input:focus,
@@ -90,10 +102,11 @@
 
 /* List */
 .ingredient-list {
-  background: white;
+  background: var(--bg-white);
   border-radius: 12px;
   padding: 1.5rem 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--shadow-sm);
+  transition: all 0.3s ease;
 }
 
 .ingredient-list-header {
@@ -108,7 +121,8 @@
 .ingredient-list-header h2 {
   margin: 0;
   font-size: 1.3rem;
-  color: #2c3e50;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .ingredient-filter {
@@ -120,14 +134,18 @@
 .ingredient-filter label {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #555;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 .ingredient-filter select {
   padding: 0.45rem 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 0.9rem;
+  background-color: var(--bg-white);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 .ingredient-filter select:focus {
@@ -139,7 +157,8 @@
 .ingredient-empty {
   text-align: center;
   padding: 2.5rem;
-  color: #7f8c8d;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 .ingredient-empty p {
@@ -172,13 +191,18 @@
 
 .ingredient-table td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #ecf0f1;
+  border-bottom: 1px solid var(--border-color);
   font-size: 0.9rem;
-  color: #2c3e50;
+  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 .ingredient-table tbody tr:hover {
-  background-color: #f8f9ff;
+  background-color: rgba(102, 126, 234, 0.05);
+}
+
+.dark-mode .ingredient-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .ingredient-name-cell {
@@ -200,6 +224,13 @@
   font-size: 0.8rem;
   font-weight: 500;
   white-space: nowrap;
+  color: #2c3e50;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .ingredient-category-badge {
+  background: linear-gradient(135deg, #3f3f46 0%, #52525b 100%);
+  color: #e4e4e7;
 }
 
 .ingredient-delete-btn {
@@ -226,7 +257,8 @@
   gap: 1rem;
   margin-top: 1.25rem;
   padding-top: 1rem;
-  border-top: 1px solid #ecf0f1;
+  border-top: 1px solid var(--border-color);
+  transition: border-color 0.3s ease;
 }
 
 .ingredient-pagination button {
@@ -251,8 +283,9 @@
 
 .ingredient-page-info {
   font-size: 0.9rem;
-  color: #555;
+  color: var(--text-secondary);
   font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 /* Delete Modal */
@@ -267,23 +300,26 @@
 }
 
 .ingredient-modal {
-  background: white;
+  background: var(--bg-white);
   border-radius: 12px;
   padding: 2rem;
   max-width: 400px;
   width: 90%;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px var(--shadow-lg);
+  transition: all 0.3s ease;
 }
 
 .ingredient-modal h3 {
   margin: 0 0 1rem;
-  color: #2c3e50;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .ingredient-modal p {
   margin: 0 0 1.5rem;
-  color: #555;
+  color: var(--text-secondary);
   line-height: 1.5;
+  transition: color 0.3s ease;
 }
 
 .ingredient-modal-actions {
@@ -293,19 +329,19 @@
 }
 
 .ingredient-modal-cancel {
-  background-color: #ecf0f1;
-  color: #2c3e50;
+  background-color: var(--border-color);
+  color: var(--text-primary);
   border: none;
   padding: 0.55rem 1.25rem;
   font-size: 0.9rem;
   font-weight: 500;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
 }
 
 .ingredient-modal-cancel:hover {
-  background-color: #d5dbdb;
+  opacity: 0.8;
 }
 
 .ingredient-modal-confirm {
