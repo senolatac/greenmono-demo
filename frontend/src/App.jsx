@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import WeeklyMenuTable from './components/WeeklyMenuTable';
 import IngredientManager from './components/IngredientManager';
+import ThemeToggle from './components/ThemeToggle';
 import './App.css';
 
 const TABS = [
@@ -13,6 +14,7 @@ function App() {
 
   return (
     <div className="App">
+      <ThemeToggle />
       <header className="app-header">
         <h1>Yemek Planlayıcı</h1>
         <p className="app-subtitle">Malzemelerinizi yönetin ve haftalık menünüzü oluşturun</p>

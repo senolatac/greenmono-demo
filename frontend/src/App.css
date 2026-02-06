@@ -96,13 +96,13 @@ code {
 }
 
 .app-tab-active {
-  background: white;
-  color: #2c3e50;
+  background: var(--bg-white);
+  color: var(--text-primary);
 }
 
 .app-tab-active:hover {
-  background: white;
-  color: #2c3e50;
+  background: var(--bg-white);
+  color: var(--text-primary);
 }
 
 /* Content */
