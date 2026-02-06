@@ -10,6 +10,7 @@ React frontend application for displaying weekly meal plans in a table format.
 - "Yeni Menü Oluştur" (Create New Menu) button
 - Responsive design for mobile and desktop
 - Error handling and loading states
+- **Dark Mode** - Toggle between light and dark themes with persistent preference (NEW!)
 
 ## Prerequisites
 
@@ -59,7 +60,11 @@ frontend/
 ├── src/
 │   ├── components/
 │   │   ├── WeeklyMenuTable.jsx    # Main menu table component
-│   │   └── WeeklyMenuTable.css    # Styling for the table
+│   │   ├── WeeklyMenuTable.css    # Styling for the table
+│   │   ├── ThemeToggle.jsx        # Dark mode toggle button
+│   │   └── ThemeToggle.css        # Toggle button styling
+│   ├── context/
+│   │   └── ThemeContext.jsx       # Theme state management
 │   ├── services/
 │   │   └── menuService.js         # API service for backend calls
 │   ├── App.jsx                     # Root component
@@ -68,6 +73,7 @@ frontend/
 ├── index.html                      # HTML template
 ├── vite.config.js                  # Vite configuration
 ├── package.json                    # Dependencies and scripts
+├── DARK_MODE_FEATURE.md            # Dark mode documentation
 └── README.md                       # This file
 ```
 
@@ -115,6 +121,10 @@ The application uses custom CSS with:
 - Smooth animations and transitions
 - Professional color scheme
 - Clean typography
+- **Dark mode support** with CSS custom properties
+- Persistent theme preference using localStorage
+
+For detailed dark mode documentation, see [DARK_MODE_FEATURE.md](./DARK_MODE_FEATURE.md)
 
 ## Configuration
 

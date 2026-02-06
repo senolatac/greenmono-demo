@@ -18,8 +18,9 @@
 
 .header h1 {
   font-size: 2rem;
-  color: #2c3e50;
+  color: var(--text-primary);
   margin: 0;
+  transition: color 0.3s ease;
 }
 
 .generate-button {
@@ -58,19 +59,28 @@
   margin-bottom: 1rem;
   border-radius: 4px;
   color: #c0392b;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .error-message {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-left-color: #ef4444;
+  color: #fca5a5;
 }
 
 .loading {
   text-align: center;
   padding: 3rem;
   font-size: 1.2rem;
-  color: #7f8c8d;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 .empty-state {
   text-align: center;
   padding: 3rem;
-  color: #7f8c8d;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 .empty-state p {
@@ -80,9 +90,10 @@
 
 .table-wrapper {
   overflow-x: auto;
-  background: white;
+  background: var(--bg-white);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--shadow-sm);
+  transition: all 0.3s ease;
 }
 
 .menu-table {
@@ -130,9 +141,10 @@
 .menu-table td {
   padding: 1.5rem 1rem;
   vertical-align: top;
-  border-right: 1px solid #ecf0f1;
-  border-bottom: 1px solid #ecf0f1;
-  background-color: #ffffff;
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-white);
+  transition: all 0.3s ease;
 }
 
 .menu-table td:last-child {
@@ -156,12 +168,22 @@
   line-height: 1.4;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease, color 0.3s ease;
+}
+
+.dark-mode .meal-item {
+  background: linear-gradient(135deg, #3f3f46 0%, #52525b 100%);
+  color: #e4e4e7;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .meal-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .meal-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
 
 /* Responsive design */
